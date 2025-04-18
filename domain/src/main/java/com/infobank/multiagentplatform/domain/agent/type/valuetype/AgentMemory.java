@@ -27,4 +27,13 @@ public class AgentMemory {
     public static AgentMemory of(String memoryType) {
         return new AgentMemory(true, memoryType);
     }
+
+    public static AgentMemory of(Boolean hasMemory, String memoryType) {
+        if (Boolean.TRUE.equals(hasMemory) && memoryType != null && !memoryType.isBlank()) {
+            return new AgentMemory(true, memoryType);
+        } else {
+            return new AgentMemory(false, null);
+        }
+    }
+
 }
