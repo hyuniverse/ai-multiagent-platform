@@ -1,0 +1,12 @@
+rootProject.name = "MultiAgentPlatform"
+include("common")
+include("broker")
+include("orchestrator")
+include("agent")
+include("app")
+include("config")
+include("invoker")
+include("persistence")
+include("domain")
+include("observability")
+include("resilience")
