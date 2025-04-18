@@ -1,0 +1,14 @@
+# app/src/main/resources/application.yml
+
+spring:
+  application:
+    name: multiagent-platform
+
+server:
+  port: 8080
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
