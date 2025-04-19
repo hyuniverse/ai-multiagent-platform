@@ -1,7 +1,5 @@
 package com.infobank.multiagentplatform.broker.dto;
 
-import com.infobank.multiagentplatform.domain.agent.type.enumtype.AgentType;
-import com.infobank.multiagentplatform.domain.agent.type.enumtype.InputType;
 import com.infobank.multiagentplatform.domain.agent.type.enumtype.ProtocolType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -26,7 +24,7 @@ public class AgentRegisterRequest {
 
     @NotNull
     @Schema(description = "에이전트 타입", example = "REACT")
-    private AgentType type;
+    private String type;
 
     @NotNull
     @Schema(description = "프로토콜 타입", example = "REST")
@@ -45,7 +43,7 @@ public class AgentRegisterRequest {
 
     @NotNull
     @Schema(description = "입력 타입 목록", example = "[\"TEXT\"]")
-    private List<InputType> inputTypes;
+    private List<String> inputTypes;
 
     @NotNull
     @Schema(description = "출력 타입 목록", example = "[\"TEXT\"]")

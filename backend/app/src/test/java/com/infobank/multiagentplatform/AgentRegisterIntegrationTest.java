@@ -3,8 +3,6 @@ package com.infobank.multiagentplatform;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.infobank.multiagentplatform.app.MultiAgentPlatformApplication;
 import com.infobank.multiagentplatform.broker.dto.AgentRegisterRequest;
-import com.infobank.multiagentplatform.domain.agent.type.enumtype.AgentType;
-import com.infobank.multiagentplatform.domain.agent.type.enumtype.InputType;
 import com.infobank.multiagentplatform.domain.agent.type.enumtype.ProtocolType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,12 +32,12 @@ class AgentRegisterIntegrationTest {
     void agent_register_success() throws Exception {
         AgentRegisterRequest request = AgentRegisterRequest.builder()
                 .id("agent-001")
-                .type(AgentType.REACT)
+                .type("react")
                 .protocol(ProtocolType.REST)
                 .endpoint("http://localhost:8081/invoke")
                 .hasMemory(true)
                 .memoryType("redis")
-                .inputTypes(List.of(InputType.TEXT))
+                .inputTypes(List.of("text"))
                 .outputTypes(List.of("TEXT"))
                 .description("테스트용 에이전트")
                 .build();
