@@ -16,6 +16,7 @@ application {
 dependencies {
     implementation(project(":config"))
     implementation(project(":broker"))
+    implementation(project(":orchestrator"))
     implementation("com.h2database:h2")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter")

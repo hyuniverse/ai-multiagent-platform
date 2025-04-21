@@ -13,6 +13,7 @@ repositories {
 
 dependencies {
     implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.2.4"))
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
 
     // Spring Web
     implementation("org.springframework.boot:spring-boot-starter-web")
