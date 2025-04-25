@@ -7,11 +7,13 @@ import com.infobank.multiagentplatform.orchestrator.dto.AgentSummary;
 import com.infobank.multiagentplatform.orchestrator.dto.ExecutionPlanResponse;
 import com.infobank.multiagentplatform.orchestrator.dto.StandardRequest;
 import com.infobank.multiagentplatform.orchestrator.client.BrokerClient;
+import com.infobank.multiagentplatform.resilience.logging.ExecutionContext;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/ask")
@@ -27,11 +29,15 @@ public class OrchestratorController {
     }
     @PostMapping
     public ExecutionPlanResponse ask(@RequestBody StandardRequest request) {
+        String requestId = UUID.randomUUID().toString();
+        ExecutionContext context = new ExecutionContext(requestId);
+        context.log("New request started.");
         // 1. 현재 사용 가능한 Agent 목록 가져오기
         List<AgentSummary> availableAgents = brokerClient.getAgentSummaries();
+        context.log("Fetched %d available agents.".formatted(availableAgents.size()));
 
         // 2. 실행 계획 수립
-        ExecutionPlan plan = taskPlannerService.plan(request, availableAgents);
+        ExecutionPlan plan = taskPlannerService.plan(request, availableAgents, context);
 
         // 3. 응답으로 변환
         return ExecutionPlanResponse.builder()
@@ -39,6 +45,7 @@ public class OrchestratorController {
                         .flatMap(block -> block.getTasks().stream())
                         .toList())
                 .unassigned(plan.getUnassigned())
+                .logs(context.getLogs())
                 .build();
     }
 }

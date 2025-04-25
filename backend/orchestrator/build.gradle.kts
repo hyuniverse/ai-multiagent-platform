@@ -26,6 +26,7 @@ dependencies {
 
     // Config 모듈 사용 시
     implementation(project(":config"))
+    implementation(project(":resilience"))
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
