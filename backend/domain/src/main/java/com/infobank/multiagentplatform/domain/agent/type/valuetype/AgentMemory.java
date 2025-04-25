@@ -12,24 +12,24 @@ import lombok.*;
 public class AgentMemory {
 
     @Column(nullable = false)
-    private final Boolean hasMemory;
+    private final boolean hasMemory;
 
     private final String memoryType;
 
-    public boolean isEnabled() {
-        return Boolean.TRUE.equals(hasMemory);
-    }
-
-    public static AgentMemory disabled() {
-        return new AgentMemory(false, null);
-    }
-
-    public static AgentMemory of(String memoryType) {
-        return new AgentMemory(true, memoryType);
-    }
+//    public boolean isEnabled() {
+//        return boolean.TRUE.equals(hasMemory);
+//    }
+//
+//    public static AgentMemory disabled() {
+//        return new AgentMemory(false, null);
+//    }
+//
+//    public static AgentMemory of(String memoryType) {
+//        return new AgentMemory(true, memoryType);
+//    }
 
     public static AgentMemory of(Boolean hasMemory, String memoryType) {
-        if (Boolean.TRUE.equals(hasMemory) && memoryType != null && !memoryType.isBlank()) {
+        if (hasMemory && memoryType != null && !memoryType.isBlank()) {
             return new AgentMemory(true, memoryType);
         } else {
             return new AgentMemory(false, null);

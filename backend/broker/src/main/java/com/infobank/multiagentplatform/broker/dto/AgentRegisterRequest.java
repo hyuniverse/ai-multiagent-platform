@@ -36,7 +36,7 @@ public class AgentRegisterRequest {
 
     @NotNull
     @Schema(description = "메모리 사용 여부", example = "true")
-    private Boolean hasMemory;
+    private boolean hasMemory;
 
     @Schema(description = "메모리 타입", example = "redis")
     private String memoryType;

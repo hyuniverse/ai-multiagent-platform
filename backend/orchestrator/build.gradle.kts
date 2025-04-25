@@ -27,7 +27,7 @@ dependencies {
     // Config 모듈 사용 시
     implementation(project(":config"))
     implementation(project(":resilience"))
-
+    implementation(project(":invoker"))
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")

@@ -1,5 +1,6 @@
 package com.infobank.multiagentplatform.invoker.domain;
 
+import com.infobank.multiagentplatform.domain.agent.type.enumtype.ProtocolType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,7 +15,7 @@ public class AgentCallTask {
     private String agentId;
     private String endpoint;
     private String payload;
-    private String protocol;
+    private ProtocolType protocol;
     private boolean hasMemory;
 
     // (필요 시 추가 필드)
