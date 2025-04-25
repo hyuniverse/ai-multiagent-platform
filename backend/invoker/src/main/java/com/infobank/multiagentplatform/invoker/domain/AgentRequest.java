@@ -9,6 +9,11 @@ public class AgentRequest {
 
     public AgentRequest() {}
 
+    public AgentRequest(String userInput) {
+        this.userInput = userInput;
+        this.input = null;
+    }
+
     public AgentRequest(String userInput, Object input) {
         this.userInput = userInput;
         this.input = input;

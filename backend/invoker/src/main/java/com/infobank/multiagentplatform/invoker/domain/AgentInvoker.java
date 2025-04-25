@@ -1,7 +1,8 @@
 package com.infobank.multiagentplatform.invoker.domain;
 
-import com.infobank.multiagentplatform.domain.agent.model.AgentMetadata;
+import com.infobank.multiagentplatform.orchestrator.domain.AgentTask;
+import com.infobank.multiagentplatform.resilience.logging.ExecutionContext;
 
 public interface AgentInvoker {
-    AgentResult invoke(AgentMetadata metadata, AgentRequest request);
+    AgentResult invoke(AgentCallTask task, ExecutionContext context);
 }

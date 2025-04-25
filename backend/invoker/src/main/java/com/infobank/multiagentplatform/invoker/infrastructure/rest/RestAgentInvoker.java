@@ -1,10 +1,11 @@
 package com.infobank.multiagentplatform.invoker.infrastructure.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.infobank.multiagentplatform.domain.agent.model.AgentMetadata;
+import com.infobank.multiagentplatform.invoker.domain.AgentCallTask;
 import com.infobank.multiagentplatform.invoker.domain.AgentInvoker;
 import com.infobank.multiagentplatform.invoker.domain.AgentRequest;
 import com.infobank.multiagentplatform.invoker.domain.AgentResult;
+import com.infobank.multiagentplatform.resilience.logging.ExecutionContext;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -17,8 +18,11 @@ public class RestAgentInvoker implements AgentInvoker {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public AgentResult invoke(AgentMetadata metadata, AgentRequest request) {
+    public AgentResult invoke(AgentCallTask task, ExecutionContext context) {
+        context.log("Invoking REST agent: " + task.getAgentId());
+
         try {
+            AgentRequest request = new AgentRequest(task.getPayload()); // 내부 생성
             String requestBody = objectMapper.writeValueAsString(request);
 
             HttpHeaders headers = new HttpHeaders();
@@ -26,12 +30,14 @@ public class RestAgentInvoker implements AgentInvoker {
             HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
 
             ResponseEntity<String> response = restTemplate.postForEntity(
-                    metadata.getEndpoint(), entity, String.class);
+                    task.getEndpoint(), entity, String.class);
 
-            return new AgentResult(response.getBody(), null); // parsedResult는 이후 처리
+            context.recordCall(task.getAgentId(), true, "Success");
+            return new AgentResult(response.getBody(), null);
+
         } catch (Exception e) {
-            throw new RuntimeException("Agent 호출 실패", e);
+            context.recordCall(task.getAgentId(), false, "REST 실패: " + e.getMessage());
+            throw new RuntimeException("REST agent 호출 실패", e);
         }
     }
-
 }
