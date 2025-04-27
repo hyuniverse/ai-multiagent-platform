@@ -12,6 +12,8 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":core:domain"))
+    implementation(project(":global-utils"))
     implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.2.4"))
 
     // Spring Web
@@ -20,11 +22,6 @@ dependencies {
     // Validation
     implementation("jakarta.validation:jakarta.validation-api:3.0.2")
 
-    // Domain 모듈 사용
-    implementation(project(":domain"))
-
-    // Config 모듈 사용 시
-    implementation(project(":config"))
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 

@@ -12,6 +12,12 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":core:domain"))
+    implementation(project(":core:infra:invoker"))
+    implementation(project(":core:infra:resilience"))
+    implementation(project(":core:infra:observability"))
+    implementation(project(":global-utils"))
+
     implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.2.4"))
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
 
@@ -21,13 +27,6 @@ dependencies {
     // Validation
     implementation("jakarta.validation:jakarta.validation-api:3.0.2")
 
-    // Domain 모듈 사용
-    implementation(project(":domain"))
-
-    // Config 모듈 사용 시
-    implementation(project(":config"))
-    implementation(project(":resilience"))
-    implementation(project(":invoker"))
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")

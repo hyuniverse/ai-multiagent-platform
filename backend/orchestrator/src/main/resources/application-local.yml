@@ -1,5 +1,0 @@
-llm:
-  client:
-    api-key: ${OPENAI_API_KEY}
-    api-url: https://api.openai.com/v1/chat/completions
-    model: gpt-4
