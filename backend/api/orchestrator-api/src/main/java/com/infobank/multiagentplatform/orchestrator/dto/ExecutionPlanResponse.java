@@ -1,6 +1,6 @@
 package com.infobank.multiagentplatform.orchestrator.dto;
 
-import com.infobank.multiagentplatform.orchestrator.domain.AgentTask;
+import com.infobank.multiagentplatform.domain.agent.task.AgentTask;
 import lombok.Builder;
 import lombok.Getter;
 

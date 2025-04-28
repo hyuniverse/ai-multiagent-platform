@@ -1,5 +1,6 @@
 package com.infobank.multiagentplatform.orchestrator.domain;
 
+import com.infobank.multiagentplatform.domain.agent.task.AgentTask;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;

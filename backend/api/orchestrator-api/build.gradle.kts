@@ -14,11 +14,11 @@ repositories {
 dependencies {
     implementation(project(":core:domain"))
     implementation(project(":core:infra:invoker"))
-    implementation(project(":core:infra:resilience"))
-    implementation(project(":core:infra:observability"))
-    implementation(project(":global-utils"))
+    implementation(project(":commons"))
+    implementation(project(":foundation:resilience"))
+    implementation(project(":foundation:logging"))
 
-    implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.2.4"))
+    implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.4.4"))
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
 
     // Spring Web

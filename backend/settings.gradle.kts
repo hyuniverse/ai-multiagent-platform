@@ -1,8 +1,8 @@
 rootProject.name = "MultiAgentPlatform"
 
-include("global-utils")
 include("app")
 include("config")
+include("commons")
 
 include("api:broker-api")
 findProject(":api:broker-api")?.name = "broker-api"
@@ -14,7 +14,7 @@ include("core:infra")
 findProject(":core:infra")?.name = "infra"
 include("core:infra:invoker")
 findProject(":core:infra:invoker")?.name = "invoker"
-include("core:infra:observability")
-findProject(":core:infra:observability")?.name = "observability"
-include("core:infra:resilience")
-findProject(":core:infra:resilience")?.name = "resilience"
+include("foundation:resilience")
+findProject(":foundation:resilience")?.name = "resilience"
+include("foundation:logging")
+findProject(":foundation:logging")?.name = "logging"

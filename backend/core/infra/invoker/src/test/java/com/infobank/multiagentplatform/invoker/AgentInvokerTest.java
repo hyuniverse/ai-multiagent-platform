@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.infobank.multiagentplatform.domain.agent.model.AgentMetadata;
 import com.infobank.multiagentplatform.domain.agent.type.enumtype.ProtocolType;
 import com.infobank.multiagentplatform.invoker.application.AgentInvokerFactory;
-import com.infobank.multiagentplatform.invoker.domain.AgentRequest;
-import com.infobank.multiagentplatform.invoker.domain.AgentResult;
+import com.infobank.multiagentplatform.domain.agent.task.AgentRequest;
+import com.infobank.multiagentplatform.domain.agent.task.AgentResult;
 import com.infobank.multiagentplatform.invoker.domain.AgentInvoker;
 import com.infobank.multiagentplatform.invoker.exception.UnsupportedProtocolException;
 import org.junit.jupiter.api.Test;
@@ -35,7 +35,7 @@ public class AgentInvokerTest {
         );
 
         AgentInvoker invoker = new AgentInvokerFactory().getInvoker(metadata.getProtocol().name());
-        AgentResult result = invoker.invoke(metadata, request);
+        AgentResult result = invoker.invoke(metadata);
         System.out.println("전송 JSON: " + new ObjectMapper().writeValueAsString(request.getInput()));
 
         assertNotNull(result);

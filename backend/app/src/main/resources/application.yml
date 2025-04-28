@@ -26,3 +26,14 @@ springdoc:
     enabled: true
   swagger-ui:
     path: /swagger-ui.html
+
+resilience:
+  retry:
+    maxAttempts: 5
+    initialInterval: 1000   # ms
+    multiplier: 2.0
+  circuitbreaker:
+    failureRateThreshold: 60.0
+    waitDurationInOpenState: 60000      # ms
+    slidingWindowSize: 50
+    permittedNumberOfCallsInHalfOpenState: 5

@@ -29,7 +29,7 @@ public class AgentController {
                 .type(request.getType())
                 .protocol(request.getProtocol())
                 .endpoint(request.getEndpoint())
-                .memory(AgentMemory.of(request.getHasMemory(), request.getMemoryType()))
+                .memory(AgentMemory.of(request.isHasMemory(), request.getMemoryType()))
                 .inputTypes(request.getInputTypes())
                 .outputTypes(request.getOutputTypes())
                 .description(request.getDescription())

@@ -13,8 +13,10 @@ repositories {
 
 dependencies {
     implementation(project(":core:domain"))
-    implementation(project(":global-utils"))
-    implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.2.4"))
+    implementation(project(":commons"))
+    implementation(project(":foundation:resilience"))
+    implementation(project(":foundation:logging"))
+    implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.4.4"))
 
     // Spring Web
     implementation("org.springframework.boot:spring-boot-starter-web")

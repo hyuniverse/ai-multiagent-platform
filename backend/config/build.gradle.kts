@@ -9,7 +9,7 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":global-utils"))
+    implementation(project(":commons"))
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")

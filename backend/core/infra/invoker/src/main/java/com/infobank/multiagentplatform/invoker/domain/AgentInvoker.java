@@ -1,8 +1,8 @@
 package com.infobank.multiagentplatform.invoker.domain;
 
-import com.infobank.multiagentplatform.orchestrator.domain.AgentTask;
-import com.infobank.multiagentplatform.resilience.logging.ExecutionContext;
+import com.infobank.multiagentplatform.domain.agent.task.AgentCallTask;
+import com.infobank.multiagentplatform.domain.agent.task.AgentResult;
 
 public interface AgentInvoker {
-    AgentResult invoke(AgentCallTask task, ExecutionContext context);
+    AgentResult invoke(AgentCallTask task);
 }

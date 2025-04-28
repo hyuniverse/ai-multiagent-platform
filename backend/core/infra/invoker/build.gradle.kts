@@ -8,7 +8,9 @@ repositories {
 
 dependencies {
     implementation(project(":core:domain"))
-    implementation(project(":global-utils"))
+    implementation(project(":commons"))
+    implementation(project(":foundation:resilience"))
+    implementation(project(":foundation:logging"))
 
     // Lombok 추가
     compileOnly("org.projectlombok:lombok:1.18.30")

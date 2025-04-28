@@ -1,8 +1,8 @@
 package com.infobank.multiagentplatform.orchestrator.util;
 
-import com.infobank.multiagentplatform.orchestrator.domain.AgentTask;
+import com.infobank.multiagentplatform.domain.agent.task.AgentTask;
 import com.infobank.multiagentplatform.domain.agent.model.AgentMetadata;
-import com.infobank.multiagentplatform.invoker.domain.AgentCallTask;
+import com.infobank.multiagentplatform.domain.agent.task.AgentCallTask;
 import lombok.Getter;
 
 @Getter
