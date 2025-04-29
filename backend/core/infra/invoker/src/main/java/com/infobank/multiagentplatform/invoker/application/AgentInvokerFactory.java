@@ -3,7 +3,9 @@ package com.infobank.multiagentplatform.invoker.application;
 import com.infobank.multiagentplatform.invoker.domain.AgentInvoker;
 import com.infobank.multiagentplatform.invoker.infrastructure.rest.RestAgentInvoker;
 import com.infobank.multiagentplatform.invoker.exception.UnsupportedProtocolException;
+import org.springframework.stereotype.Component;
 
+@Component
 public class AgentInvokerFactory {
     public AgentInvoker getInvoker(String protocol) {
         return switch (protocol.toLowerCase()) {

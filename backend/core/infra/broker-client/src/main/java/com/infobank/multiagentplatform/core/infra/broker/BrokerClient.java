@@ -1,0 +1,20 @@
+package com.infobank.multiagentplatform.core.infra.broker;
+
+import com.infobank.multiagentplatform.domain.agent.model.AgentMetadata;
+import com.infobank.multiagentplatform.domain.agent.model.AgentSummary;
+
+import java.util.List;
+
+/**
+ * Broker 서비스와의 통신 포트(인터페이스)
+ * core/infra 계층에 위치하여 상위(api/orchestrator) 모듈에서 참조만 함
+ */
+public interface BrokerClient {
+    /** 단일 에이전트 메타데이터 조회 */
+    AgentMetadata getAgentMetadata(String agentId);
+
+    /** 배치 조회(여러 ID) */
+    List<AgentMetadata> getAgentMetadataBatch(List<String> agentIds);
+
+    List<AgentSummary> getAgentSummaries();          // ← core/domain.AgentSummary
+}

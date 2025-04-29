@@ -4,7 +4,7 @@ import com.infobank.multiagentplatform.orchestrator.config.LLMClientProperties;
 import com.infobank.multiagentplatform.domain.agent.task.AgentTask;
 import com.infobank.multiagentplatform.orchestrator.domain.TaskBlock;
 import com.infobank.multiagentplatform.orchestrator.dto.StandardRequest;
-import com.infobank.multiagentplatform.orchestrator.dto.AgentSummary;
+import com.infobank.multiagentplatform.domain.agent.model.AgentSummary;
 import com.infobank.multiagentplatform.orchestrator.domain.ExecutionPlan;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

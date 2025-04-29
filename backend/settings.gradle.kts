@@ -16,5 +16,5 @@ include("core:infra:invoker")
 findProject(":core:infra:invoker")?.name = "invoker"
 include("foundation:resilience")
 findProject(":foundation:resilience")?.name = "resilience"
-include("foundation:logging")
-findProject(":foundation:logging")?.name = "logging"
+include("core:infra:broker-client")
+findProject(":core:infra:broker-client")?.name = "broker-client"

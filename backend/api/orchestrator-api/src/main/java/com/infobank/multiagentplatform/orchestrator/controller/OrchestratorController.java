@@ -1,11 +1,11 @@
 package com.infobank.multiagentplatform.orchestrator.controller;
 
+import com.infobank.multiagentplatform.core.infra.broker.BrokerClient;
 import com.infobank.multiagentplatform.orchestrator.application.TaskPlannerService;
 import com.infobank.multiagentplatform.orchestrator.domain.ExecutionPlan;
-import com.infobank.multiagentplatform.orchestrator.dto.AgentSummary;
+import com.infobank.multiagentplatform.domain.agent.model.AgentSummary;
 import com.infobank.multiagentplatform.orchestrator.dto.ExecutionPlanResponse;
 import com.infobank.multiagentplatform.orchestrator.dto.StandardRequest;
-import com.infobank.multiagentplatform.orchestrator.client.BrokerClient;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

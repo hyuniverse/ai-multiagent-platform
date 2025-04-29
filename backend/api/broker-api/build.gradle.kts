@@ -15,7 +15,6 @@ dependencies {
     implementation(project(":core:domain"))
     implementation(project(":commons"))
     implementation(project(":foundation:resilience"))
-    implementation(project(":foundation:logging"))
     implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.4.4"))
 
     // Spring Web

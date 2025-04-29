@@ -4,23 +4,20 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
 }
 
+group = "com.infobank"
+version = "unspecified"
+
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation(project(":core:domain"))
-    implementation(project(":core:infra:broker-client"))
     implementation(project(":commons"))
-    implementation(project(":foundation:resilience"))
-
-    // Lombok 추가
+    implementation(project(":core:domain"))
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter")
     compileOnly("org.projectlombok:lombok:1.18.30")
     annotationProcessor("org.projectlombok:lombok:1.18.30")
-
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
-
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 }
