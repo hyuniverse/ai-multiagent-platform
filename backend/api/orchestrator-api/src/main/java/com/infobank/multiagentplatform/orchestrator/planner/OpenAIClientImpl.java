@@ -1,51 +1,65 @@
 package com.infobank.multiagentplatform.orchestrator.planner;
 
-import com.infobank.multiagentplatform.orchestrator.config.LLMClientProperties;
-import com.infobank.multiagentplatform.domain.agent.task.AgentTask;
-import com.infobank.multiagentplatform.orchestrator.domain.TaskBlock;
-import com.infobank.multiagentplatform.orchestrator.dto.StandardRequest;
-import com.infobank.multiagentplatform.domain.agent.model.AgentSummary;
-import com.infobank.multiagentplatform.orchestrator.domain.ExecutionPlan;
-import lombok.RequiredArgsConstructor;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Value;
 
+import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
+/**
+ * OpenAI API 호출 구현
+ */
 @Component
-@RequiredArgsConstructor
-public class OpenAIClientImpl implements LLMClient {
+public class OpenAIClientImpl {
 
     private final RestTemplate restTemplate;
-    private final LLMClientProperties properties;
-    //private final ExecutionPlanParser executionPlanParser; // JSON → ExecutionPlan 변환 담당
+    private final String apiUrl;
+    private final String model;
 
-    @Override
-    public ExecutionPlan plan(StandardRequest request, List<AgentSummary> agentSummaries) {
-        // 1. 프롬프트 생성
-        String prompt = buildPrompt(request, agentSummaries);
-
-        // 2. OpenAI API 호출
-        String response = callOpenAI(prompt);
-
-        // 3. 응답 파싱
-        AgentTask task = AgentTask.builder()
-                .goal("summarize")
-                .agentId("summarizer-v1")
-                .inputType("text")
+    public OpenAIClientImpl(RestTemplateBuilder builder,
+                            @Value("${openai.api.url}") String apiUrl,
+                            @Value("${openai.api.key}") String apiKey,
+                            @Value("${openai.api.model:gpt-3.5-turbo}") String model) {
+        this.restTemplate = builder
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                .setConnectTimeout(Duration.ofSeconds(5))
+                .setReadTimeout(Duration.ofSeconds(60))
                 .build();
-        return new ExecutionPlan(List.of(new TaskBlock(List.of(task))), List.of());
-
+        this.apiUrl = apiUrl;
+        this.model = model;
     }
 
-    private String buildPrompt(StandardRequest request, List<AgentSummary> agentSummaries) {
-        // TODO: PromptContextBuilder를 활용하여 실제 prompt 구성
-        return "PromptContextBuilder 개발 후 적용 예정";
-    }
-
-    private String callOpenAI(String prompt) {
-        // TODO: OpenAI API 호출 로직 구현
-        // 현재는 목업 반환
-        return "{ \"tasks\": [] }";
+    /**
+     * 프롬프트를 보내고, LLM 응답 메시지(content)만 추출하여 반환
+     */
+    public String callOpenAI(String prompt) {
+        Map<String, Object> message = Map.of(
+                "role", "user",
+                "content", prompt
+        );
+        Map<String, Object> body = Map.of(
+                "model", model,
+                "messages", List.of(message)
+        );
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body);
+        ResponseEntity<JsonNode> response = restTemplate.postForEntity(apiUrl, request, JsonNode.class);
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            throw new IllegalStateException("OpenAI API call failed: " + response.getStatusCode());
+        }
+        JsonNode choices = response.getBody().get("choices");
+        if (choices == null || !choices.isArray() || choices.size() == 0) {
+            throw new IllegalStateException("No choices in OpenAI response");
+        }
+        return choices.get(0).get("message").get("content").asText();
     }
 }

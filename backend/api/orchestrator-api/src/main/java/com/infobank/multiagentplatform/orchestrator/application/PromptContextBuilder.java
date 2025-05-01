@@ -1,14 +1,11 @@
 package com.infobank.multiagentplatform.orchestrator.application;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.infobank.multiagentplatform.orchestrator.domain.ExecutionPlan;
 import com.infobank.multiagentplatform.domain.agent.model.AgentSummary;
 import com.infobank.multiagentplatform.orchestrator.dto.StandardRequest;
-import com.infobank.multiagentplatform.orchestrator.exception.PlanParsingException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -16,44 +13,45 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class PromptContextBuilder {
-
     private final ObjectMapper objectMapper;
-    private final String template;
+    private final ObjectNode templateRoot;
 
-    public PromptContextBuilder(ObjectMapper objectMapper,
-                                @Value("classpath:prompt-templates/orchestrator-prompt.json") Resource resource) throws IOException {
-        this.objectMapper = objectMapper;
-        this.template = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+    public PromptContextBuilder(ObjectMapper om,
+                                @Value("classpath:prompt-templates/default-prompt.json") Resource res)
+            throws IOException {
+        this.objectMapper = om;
+        // 템플릿을 ObjectNode 로 파싱해서 보관
+        this.templateRoot = (ObjectNode)om.readTree(res.getInputStream());
     }
 
-    /**
-     * 사용자 요청과 에이전트 목록을 바탕으로 최종 LLM 프롬프트를 생성한다.
-     */
-    public String buildPrompt(StandardRequest request, List<AgentSummary> agents) {
+    public String buildPrompt(StandardRequest req, List<AgentSummary> agents) {
+        // 원본 템플릿 복제
+        ObjectNode root = templateRoot.deepCopy();
+        // 1) 사용자 입력
+        root.put("user_input", req.getRawText());
+
+        // 2) 에이전트 목록
+        ArrayNode arr = objectMapper.createArrayNode();
+        for (AgentSummary a : agents) {
+            ObjectNode node = objectMapper.createObjectNode();
+            node.put("agentId",   a.getAgentId());
+            node.put("description",a.getDescription());
+            node.put("inputType",  a.getInputType());
+            node.put("outputType", a.getOutputType());
+            arr.add(node);
+        }
+        root.set("agent_list", arr);
+
+        // 3) response_format 은 템플릿에 이미 들어있으므로 건드리지 않음
+
         try {
-            ObjectNode root = (ObjectNode) objectMapper.readTree(template);
-            // 사용자 입력 삽입
-            root.put("user_input", request.getRawText());
-            // 에이전트 목록 생성
-            ArrayNode agentsArray = objectMapper.createArrayNode();
-            for (AgentSummary agent : agents) {
-                ObjectNode agentNode = objectMapper.createObjectNode();
-                agentNode.put("agentId", agent.getAgentId());
-                agentNode.put("description", agent.getDescription());
-                agentNode.put("inputType", agent.getInputType());
-                agentNode.put("outputType", agent.getOutputType());
-                agentsArray.add(agentNode);
-            }
-            root.set("agent_list", agentsArray);
             return objectMapper.writeValueAsString(root);
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to build prompt JSON", e);
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to read prompt template", e);
+            // TODO: PlanParsingException 등으로 던져도 좋고, 폴백 텍스트 빌더로 대체해도 OK
+            throw new IllegalStateException("프롬프트 JSON 생성 실패", e);
         }
     }
 }

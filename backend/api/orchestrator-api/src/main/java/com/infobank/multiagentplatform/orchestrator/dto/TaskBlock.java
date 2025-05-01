@@ -1,4 +1,4 @@
-package com.infobank.multiagentplatform.orchestrator.domain;
+package com.infobank.multiagentplatform.orchestrator.dto;
 
 import com.infobank.multiagentplatform.domain.agent.task.AgentTask;
 import lombok.AllArgsConstructor;

@@ -3,7 +3,7 @@ package com.infobank.multiagentplatform.orchestrator.application;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.infobank.multiagentplatform.orchestrator.domain.ExecutionPlan;
+import com.infobank.multiagentplatform.orchestrator.dto.ExecutionPlan;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
