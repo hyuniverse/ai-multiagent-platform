@@ -1,9 +1,11 @@
 package com.infobank.multiagentplatform.orchestrator.application;
 
-import com.infobank.multiagentplatform.orchestrator.dto.ExecutionPlan;
-import com.infobank.multiagentplatform.orchestrator.dto.StandardRequest;
+import com.infobank.multiagentplatform.orchestrator.model.ExecutionPlan;
+import com.infobank.multiagentplatform.orchestrator.model.StandardRequest;
 import com.infobank.multiagentplatform.domain.agent.model.AgentSummary;
-import com.infobank.multiagentplatform.orchestrator.planner.OpenAIClientImpl;
+import com.infobank.multiagentplatform.orchestrator.planner.PlanJsonParser;
+import com.infobank.multiagentplatform.orchestrator.planner.PromptBuilder;
+import com.infobank.multiagentplatform.orchestrator.planner.llm.OpenAIClient;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,13 +17,13 @@ import java.util.List;
  */
 public class TaskPlannerService {
 
-    private final PromptContextBuilder promptBuilder;
-    private final OpenAIClientImpl llmClient;
-    private final ExecutionPlanParser parser;
+    private final PromptBuilder promptBuilder;
+    private final OpenAIClient llmClient;
+    private final PlanJsonParser parser;
 
-    public TaskPlannerService(PromptContextBuilder promptBuilder,
-                              OpenAIClientImpl llmClient,
-                              ExecutionPlanParser parser) {
+    public TaskPlannerService(PromptBuilder promptBuilder,
+                              OpenAIClient llmClient,
+                              PlanJsonParser parser) {
         this.promptBuilder = promptBuilder;
         this.llmClient = llmClient;
         this.parser = parser;

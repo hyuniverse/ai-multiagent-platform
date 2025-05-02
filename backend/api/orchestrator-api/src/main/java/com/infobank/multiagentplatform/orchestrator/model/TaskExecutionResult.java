@@ -1,4 +1,4 @@
-package com.infobank.multiagentplatform.orchestrator.dto;
+package com.infobank.multiagentplatform.orchestrator.model;
 
 import lombok.Builder;
 import lombok.Getter;

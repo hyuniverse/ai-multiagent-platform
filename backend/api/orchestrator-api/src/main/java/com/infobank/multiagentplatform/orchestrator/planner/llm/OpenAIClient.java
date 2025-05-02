@@ -1,4 +1,4 @@
-package com.infobank.multiagentplatform.orchestrator.planner;
+package com.infobank.multiagentplatform.orchestrator.planner.llm;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -19,16 +19,16 @@ import java.util.Map;
  * OpenAI API 호출 구현
  */
 @Component
-public class OpenAIClientImpl {
+public class OpenAIClient {
 
     private final RestTemplate restTemplate;
     private final String apiUrl;
     private final String model;
 
-    public OpenAIClientImpl(RestTemplateBuilder builder,
-                            @Value("${openai.api.url}") String apiUrl,
-                            @Value("${openai.api.key}") String apiKey,
-                            @Value("${openai.api.model:gpt-3.5-turbo}") String model) {
+    public OpenAIClient(RestTemplateBuilder builder,
+                        @Value("${openai.api.url}") String apiUrl,
+                        @Value("${openai.api.key}") String apiKey,
+                        @Value("${openai.api.model:gpt-3.5-turbo}") String model) {
         this.restTemplate = builder
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)

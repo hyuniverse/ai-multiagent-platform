@@ -1,8 +1,8 @@
-package com.infobank.multiagentplatform.orchestrator.planner;
+package com.infobank.multiagentplatform.orchestrator.planner.llm;
 
-import com.infobank.multiagentplatform.orchestrator.dto.StandardRequest;
+import com.infobank.multiagentplatform.orchestrator.model.StandardRequest;
 import com.infobank.multiagentplatform.domain.agent.model.AgentSummary;
-import com.infobank.multiagentplatform.orchestrator.dto.ExecutionPlan;
+import com.infobank.multiagentplatform.orchestrator.model.ExecutionPlan;
 
 import java.util.List;
 

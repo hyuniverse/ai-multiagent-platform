@@ -1,13 +1,13 @@
 package com.infobank.multiagentplatform.orchestrator.controller;
 
 import com.infobank.multiagentplatform.domain.agent.model.AgentSummary;
-import com.infobank.multiagentplatform.orchestrator.application.ExecutionPlanExecutor;
+import com.infobank.multiagentplatform.orchestrator.application.executor.ExecutionPlanExecutor;
 import com.infobank.multiagentplatform.orchestrator.application.TaskPlannerService;
 import com.infobank.multiagentplatform.core.infra.broker.BrokerClient;
-import com.infobank.multiagentplatform.orchestrator.dto.ExecutionPlan;
-import com.infobank.multiagentplatform.orchestrator.domain.ExecutionResult;
-import com.infobank.multiagentplatform.orchestrator.dto.ExecutionPlanResponse;
-import com.infobank.multiagentplatform.orchestrator.dto.StandardRequest;
+import com.infobank.multiagentplatform.orchestrator.model.ExecutionPlan;
+import com.infobank.multiagentplatform.orchestrator.model.ExecutionPlanResponse;
+import com.infobank.multiagentplatform.orchestrator.model.ExecutionResult;
+import com.infobank.multiagentplatform.orchestrator.model.StandardRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -59,8 +59,8 @@ public class OrchestratorController {
         logger.info("생성된 ExecutionPlan 블록 수: {}", plan.getBlocks().size());
 
         // 3. 실행 계획 수행
-        ExecutionResult execResult = executor.execute(plan);
-        logger.info("실행된 태스크 결과 수: {}", execResult.getTaskResults().size());
+        ExecutionResult execResult = executor.executePlan(plan);
+        logger.info("실행된 태스크 결과 수: {}", execResult.getOrderedResults().size());
 
         // 4. DTO로 매핑하여 반환
         ExecutionPlanResponse response = ExecutionPlanResponse.from(plan, execResult);

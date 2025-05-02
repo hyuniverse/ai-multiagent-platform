@@ -1,26 +1,25 @@
-package com.infobank.multiagentplatform.orchestrator.application;
+package com.infobank.multiagentplatform.orchestrator.planner;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.infobank.multiagentplatform.domain.agent.model.AgentSummary;
-import com.infobank.multiagentplatform.orchestrator.dto.StandardRequest;
+import com.infobank.multiagentplatform.orchestrator.model.StandardRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Component
-public class PromptContextBuilder {
+public class PromptBuilder {
     private final ObjectMapper objectMapper;
     private final ObjectNode templateRoot;
 
-    public PromptContextBuilder(ObjectMapper om,
-                                @Value("classpath:prompt-templates/default-prompt.json") Resource res)
+    public PromptBuilder(ObjectMapper om,
+                         @Value("classpath:prompt-templates/default-prompt.json") Resource res)
             throws IOException {
         this.objectMapper = om;
         // 템플릿을 ObjectNode 로 파싱해서 보관

@@ -37,3 +37,15 @@ resilience:
     waitDurationInOpenState: 60000      # ms
     slidingWindowSize: 50
     permittedNumberOfCallsInHalfOpenState: 5
+
+# Actuator 설정: 빈 목록 확인용
+management:
+  endpoints:
+    web:
+      exposure:
+        include: beans,health,info
+
+# 로깅 레벨 조정: 빈 생성 로그 확인
+logging:
+  level:
+    org.springframework.beans.factory.support: DEBUG
