@@ -18,6 +18,9 @@ dependencies {
     implementation(project(":commons"))
     implementation(project(":foundation:resilience"))
 
+    implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
+
+
     implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.4.4"))
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
 
