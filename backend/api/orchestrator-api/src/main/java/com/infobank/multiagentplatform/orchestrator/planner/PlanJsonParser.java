@@ -23,6 +23,11 @@ public class PlanJsonParser {
      */
     public ExecutionPlan parse(String rawJson) {
         try {
+            // Remove markdown code block if exists
+            if (rawJson.startsWith("```")) {
+                rawJson = rawJson.replaceAll("(?s)```(?:json)?\\s*", "")  // remove opening ```
+                        .replaceAll("\\s*```$", "");            // remove closing ```
+            }
             ExecutionPlan plan = objectMapper.readValue(rawJson, ExecutionPlan.class);
             validatePlan(plan);
             return plan;

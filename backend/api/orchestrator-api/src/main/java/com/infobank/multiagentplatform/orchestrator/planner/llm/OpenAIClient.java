@@ -7,12 +7,11 @@ import com.infobank.multiagentplatform.orchestrator.model.ExecutionPlan;
 import com.infobank.multiagentplatform.orchestrator.model.StandardRequest;
 import com.infobank.multiagentplatform.orchestrator.planner.PlanJsonParser;
 import com.infobank.multiagentplatform.orchestrator.planner.PromptBuilder;
+import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -22,7 +21,6 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -49,7 +47,6 @@ public class OpenAIClient implements LLMClient {
                 .setConnectTimeout(Timeout.ofSeconds(5))
                 .setResponseTimeout(Timeout.ofSeconds(60))
                 .build();
-
         CloseableHttpClient httpClient = HttpClients.custom()
                 .setDefaultRequestConfig(requestConfig)
                 .build();
@@ -73,6 +70,7 @@ public class OpenAIClient implements LLMClient {
     public ExecutionPlan plan(StandardRequest request, List<AgentSummary> agentSummaries) {
         String prompt = promptBuilder.buildPrompt(request, agentSummaries);
         String content = callOpenAI(prompt);
+        System.out.println(content);
         return planJsonParser.parse(content);
     }
 
