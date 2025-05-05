@@ -2,6 +2,7 @@ package com.infobank.multiagentplatform.orchestrator.planner.llm;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.infobank.multiagentplatform.domain.agent.model.AgentSummary;
+import com.infobank.multiagentplatform.orchestrator.config.LLMClientProperties;
 import com.infobank.multiagentplatform.orchestrator.model.ExecutionPlan;
 import com.infobank.multiagentplatform.orchestrator.model.StandardRequest;
 import com.infobank.multiagentplatform.orchestrator.planner.PlanJsonParser;
@@ -39,11 +40,10 @@ public class OpenAIClient implements LLMClient {
     private final PlanJsonParser planJsonParser;
 
     public OpenAIClient(RestTemplateBuilder builder,
-                        @Value("${openai.api.url}") String apiUrl,
-                        @Value("${openai.api.key}") String apiKey,
-                        @Value("${openai.api.model:gpt-3.5-turbo}") String model,
+                        LLMClientProperties props,
                         PromptBuilder promptBuilder,
                         PlanJsonParser planJsonParser) {
+
 
         RequestConfig requestConfig = RequestConfig.custom()
                 .setConnectTimeout(Timeout.ofSeconds(5))
@@ -60,11 +60,11 @@ public class OpenAIClient implements LLMClient {
         this.restTemplate = builder
                 .requestFactory(() -> factory)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + props.getApiKey())
                 .build();
 
-        this.apiUrl = apiUrl;
-        this.model = model;
+        this.apiUrl = props.getApiUrl();
+        this.model = props.getModel();
         this.promptBuilder = promptBuilder;
         this.planJsonParser = planJsonParser;
     }

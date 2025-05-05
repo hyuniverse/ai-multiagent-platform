@@ -2,6 +2,7 @@ package com.infobank.multiagentplatform.orchestrator.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,7 +12,7 @@ import java.util.Map;
  * 사용자 요청 기반 실행 계획 수립을 위한 입력 DTO
  */
 @Getter
-@Setter
+@Builder
 @Schema(description = "사용자 요청 기반 실행 계획 수립 요청")
 public class StandardRequest {
 
