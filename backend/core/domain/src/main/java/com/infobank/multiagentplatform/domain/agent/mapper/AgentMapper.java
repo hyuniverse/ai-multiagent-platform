@@ -11,10 +11,6 @@ import org.mapstruct.factory.Mappers;
 @Mapper(componentModel = "spring")
 public interface AgentMapper {
 
-    AgentMapper INSTANCE = Mappers.getMapper(AgentMapper.class);
-
-    AgentEntity toEntity(AgentMetadata metadata);
-
     AgentMetadata toModel(AgentEntity entity);
 
     AgentSnapshotEntity toEntity(AgentSnapshot snapshot);

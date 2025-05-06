@@ -1,5 +1,6 @@
 package com.infobank.multiagentplatform.domain.agent.entity;
 
+import com.infobank.multiagentplatform.domain.agent.model.AgentMetadata;
 import com.infobank.multiagentplatform.domain.agent.type.enumtype.ProtocolType;
 import com.infobank.multiagentplatform.domain.agent.type.valuetype.AgentMemory;
 import jakarta.persistence.*;
@@ -16,28 +17,47 @@ import java.util.List;
 public class AgentEntity {
 
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String uuid;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false, unique = true)
+    private String endpoint;
 
     @Column(nullable = false)
     private String type;
 
     @Enumerated(EnumType.STRING)
-    private ProtocolType protocol;
-
     @Column(nullable = false)
-    private String endpoint;
+    private ProtocolType protocol;
 
     @Embedded
     private AgentMemory memory;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "agent_input_types", joinColumns = @JoinColumn(name = "agent_id"))
+    @CollectionTable(name = "agent_input_types", joinColumns = @JoinColumn(name = "agent_uuid"))
     private List<String> inputTypes;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "agent_output_types", joinColumns = @JoinColumn(name = "agent_id"))
+    @CollectionTable(name = "agent_output_types", joinColumns = @JoinColumn(name = "agent_uuid"))
     private List<String> outputTypes;
 
     @Column(length = 512)
     private String description;
+
+    public static AgentEntity from(AgentMetadata metadata, String uuid) {
+        return AgentEntity.builder()
+                .uuid(uuid)
+                .name(metadata.getName())
+                .type(metadata.getType())
+                .protocol(metadata.getProtocol())
+                .endpoint(metadata.getEndpoint())
+                .memory(metadata.getMemory())
+                .inputTypes(metadata.getInputTypes())
+                .outputTypes(metadata.getOutputTypes())
+                .description(metadata.getDescription())
+                .build();
+    }
 }

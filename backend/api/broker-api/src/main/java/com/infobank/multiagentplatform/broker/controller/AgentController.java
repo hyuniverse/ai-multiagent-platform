@@ -1,17 +1,26 @@
 package com.infobank.multiagentplatform.broker.controller;
 
-import com.infobank.multiagentplatform.broker.dto.AgentRegisterRequest;
-import com.infobank.multiagentplatform.broker.service.register.AgentRegistrationService;
-import com.infobank.multiagentplatform.domain.agent.model.AgentMetadata;
-import com.infobank.multiagentplatform.domain.agent.type.valuetype.AgentMemory;
+import com.infobank.multiagentplatform.broker.controller.request.AgentBatchRequest;
+import com.infobank.multiagentplatform.broker.controller.request.AgentRegisterRequest;
+import com.infobank.multiagentplatform.broker.controller.request.AgentUpdateRequest;
+import com.infobank.multiagentplatform.broker.service.AgentService;
+import com.infobank.multiagentplatform.broker.service.response.AgentRegisterResponse;
+import com.infobank.multiagentplatform.broker.service.response.AgentResponse;
+import com.infobank.multiagentplatform.broker.service.response.AgentSummaryResponse;
+import com.infobank.multiagentplatform.commons.api.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
+
+import static com.infobank.multiagentplatform.commons.api.ApiResponse.created;
 
 @RestController
 @RequestMapping("/agents")
@@ -19,23 +28,59 @@ import java.net.URI;
 @Tag(name = "Agent", description = "에이전트 등록/관리 API")
 public class AgentController {
 
-    private final AgentRegistrationService registrationService;
+    private final AgentService agentService;
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "에이전트 등록", description = "에이전트를 등록합니다. ID가 중복되면 409 에러를 반환합니다.")
-    public ResponseEntity<Void> register(@Validated @RequestBody AgentRegisterRequest request) {
-        AgentMetadata metadata = AgentMetadata.builder()
-                .id(request.getId())
-                .type(request.getType())
-                .protocol(request.getProtocol())
-                .endpoint(request.getEndpoint())
-                .memory(AgentMemory.of(request.isHasMemory(), request.getMemoryType()))
-                .inputTypes(request.getInputTypes())
-                .outputTypes(request.getOutputTypes())
-                .description(request.getDescription())
-                .build();
+    public ApiResponse<AgentRegisterResponse> registerAgent(@Valid @RequestBody AgentRegisterRequest request) {
+        AgentRegisterResponse response = agentService.registerAgent(request.toServiceRequest());
 
-        registrationService.register(metadata);
-        return ResponseEntity.created(URI.create("/agents/" + request.getId())).build();
+        return created(response);
     }
+
+//    @GetMapping
+//    @Operation(summary = "전체 에이전트 조회")
+//    public ResponseEntity<List<AgentResponse>> listAllAgent() {
+//        List<AgentResponse> responses = agentService.findAll();
+//        return ResponseEntity.ok(responses);
+//    }
+//
+//    @GetMapping("/{id}")
+//    @Operation(summary = "단일 에이전트 조회")
+//    public ResponseEntity<AgentResponse> getOneAgent(@PathVariable String id) {
+//        AgentResponse response = agentService.findById(id);
+//        return ResponseEntity.ok(response);
+//    }
+//
+//    @PutMapping("/{id}")
+//    @Operation(summary = "에이전트 수정")
+//    public ResponseEntity<AgentResponse> modifyAgent(
+//            @PathVariable String id,
+//            @Validated @RequestBody AgentUpdateRequest req) {
+//        AgentResponse response = agentService.findById(id);
+//        return ResponseEntity.ok(response);
+//    }
+//
+//    @DeleteMapping("/{id}")
+//    @Operation(summary = "에이전트 삭제")
+//    public ResponseEntity<Void> deleteAgent(@PathVariable String id) {
+//        agentService.delete(id);
+//        return ResponseEntity.noContent().build();
+//    }
+//
+//    @GetMapping("/summaries")
+//    @Operation(summary = "에이전트 요약 정보 조회")
+//    public ResponseEntity<List<AgentSummaryResponse>> summaries() {
+//        List<AgentSummaryResponse> summaries = agentService.findSummaries();
+//        return ResponseEntity.ok(summaries);
+//    }
+//
+//    @PostMapping("/batch")
+//    @Operation(summary = "배치 조회", description = "여러 agentId로 메타데이터를 한 번에 조회합니다.")
+//    public ResponseEntity<List<AgentResponse>> batch(
+//            @RequestBody AgentBatchRequest req) {
+//        List<AgentResponse> responses = agentService.findBatch(req.getIds());
+//        return ResponseEntity.ok(responses);
+//    }
 }

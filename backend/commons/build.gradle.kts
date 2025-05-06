@@ -14,6 +14,10 @@ repositories {
 dependencies {
     implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.4.4"))
 
+    // Lombok
+    compileOnly("org.projectlombok:lombok:1.18.30")
+    annotationProcessor("org.projectlombok:lombok:1.18.30")
+
     // REST 예외 핸들러(@RestControllerAdvice), ResponseEntity, @Valid 등을 사용
     implementation("org.springframework.boot:spring-boot-starter-web")
     // javax/hibernate validator (@Valid, @NotNull 등)
