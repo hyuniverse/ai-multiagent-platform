@@ -1,8 +1,10 @@
 // AgentBatchRequest.java
-package com.infobank.multiagentplatform.broker.controller.request;
+package com.infobank.multiagentplatform.core.contract.agent.request;
 
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
@@ -10,9 +12,10 @@ import java.util.List;
 /**
  * POST /agents/batch 요청 바디용
  */
-@Data
-@NoArgsConstructor
+
+@Getter
 @AllArgsConstructor
 public class AgentBatchRequest {
+    @NotEmpty
     private List<String> ids;
 }

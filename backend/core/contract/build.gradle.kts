@@ -1,22 +1,17 @@
 plugins {
     id("java")
-    id("org.springframework.boot")
-    id("io.spring.dependency-management")
 }
 
-group = "com.infobank.multiagentplatform.broker"
-version = "0.0.1"
+group = "com.infobank"
+version = "unspecified"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation(project(":core:domain"))
     implementation(project(":commons"))
-    implementation(project(":foundation:resilience"))
-    implementation(project(":core:contract"))
-    implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.4.4"))
+    implementation(project(":core:domain"))
 
     // Spring Web
     implementation("org.springframework.boot:spring-boot-starter-web")
@@ -37,19 +32,11 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.17.0")
 
-    // 테스트
+
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 }
 
 tasks.test {
     useJUnitPlatform()
-}
-
-tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
-    enabled = false
-}
-
-tasks.getByName<Jar>("jar") {
-    enabled = true
 }

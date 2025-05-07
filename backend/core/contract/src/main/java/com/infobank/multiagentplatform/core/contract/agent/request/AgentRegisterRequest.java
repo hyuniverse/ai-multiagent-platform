@@ -1,4 +1,4 @@
-package com.infobank.multiagentplatform.broker.controller.request;
+package com.infobank.multiagentplatform.core.contract.agent.request;
 
 import com.infobank.multiagentplatform.broker.service.request.AgentRegisterServiceRequest;
 import com.infobank.multiagentplatform.domain.agent.type.enumtype.ProtocolType;
@@ -11,7 +11,6 @@ import java.util.List;
 
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
 @Schema(description = "에이전트 등록 요청 DTO")
 public class AgentRegisterRequest {
 

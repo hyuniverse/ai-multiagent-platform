@@ -18,3 +18,5 @@ include("foundation:resilience")
 findProject(":foundation:resilience")?.name = "resilience"
 include("core:infra:broker-client")
 findProject(":core:infra:broker-client")?.name = "broker-client"
+include("core:contract")
+findProject(":core:contract")?.name = "contract"

@@ -1,5 +1,4 @@
-// AgentResponse.java
-package com.infobank.multiagentplatform.broker.service.response;
+package com.infobank.multiagentplatform.core.contract.agent.request;
 
 import com.infobank.multiagentplatform.domain.agent.type.enumtype.ProtocolType;
 import lombok.AllArgsConstructor;
@@ -10,14 +9,13 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * GET/POST/PUT 응답 바디용
+ * PUT /agents/{id} 요청 바디용
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AgentResponse {
-    private String id;
+public class AgentUpdateRequest {
     private String type;
     private ProtocolType protocol;
     private String endpoint;
