@@ -2,7 +2,7 @@
 //
 //import com.fasterxml.jackson.databind.ObjectMapper;
 //import com.infobank.multiagentplatform.app.MultiAgentPlatformApplication;
-//import com.infobank.multiagentplatform.broker.controller.request.AgentRegisterRequest;
+//import com.infobank.multiagentplatform.core.contract.agent.request.AgentRegisterRequest;
 //import com.infobank.multiagentplatform.domain.agent.type.enumtype.ProtocolType;
 //import org.junit.jupiter.api.DisplayName;
 //import org.junit.jupiter.api.Test;

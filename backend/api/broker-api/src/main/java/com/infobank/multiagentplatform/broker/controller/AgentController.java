@@ -4,22 +4,14 @@ import com.infobank.multiagentplatform.broker.controller.request.AgentBatchReque
 import com.infobank.multiagentplatform.broker.controller.request.AgentRegisterRequest;
 import com.infobank.multiagentplatform.broker.controller.request.AgentUpdateRequest;
 import com.infobank.multiagentplatform.broker.service.AgentService;
-import com.infobank.multiagentplatform.broker.service.response.AgentDetailResponse;
 import com.infobank.multiagentplatform.broker.service.response.AgentRegisterResponse;
-import com.infobank.multiagentplatform.broker.service.response.AgentResponse;
-import com.infobank.multiagentplatform.broker.service.response.AgentSummaryResponse;
 import com.infobank.multiagentplatform.commons.api.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
-import java.util.List;
 
 import static com.infobank.multiagentplatform.commons.api.ApiResponse.created;
 
@@ -40,19 +32,7 @@ public class AgentController {
         return created(response);
     }
 
-    @GetMapping
-    @Operation(summary = "전체 에이전트 조회")
-    public ApiResponse<List<AgentDetailResponse>> listAllAgentDetails() {
-        List<AgentDetailResponse> responses = agentService.getAllAgentDetails();
-        return ApiResponse.ok(responses);
-    }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "단일 에이전트 조회")
-    public ApiResponse<AgentDetailResponse> getOneAgent(@PathVariable String id) {
-        AgentDetailResponse response = agentService.getAgentDetails(id);
-        return ApiResponse.ok(response);
-    }
 //
 //    @PutMapping("/{id}")
 //    @Operation(summary = "에이전트 수정")
@@ -70,12 +50,7 @@ public class AgentController {
 //        return ResponseEntity.noContent().build();
 //    }
 
-    @GetMapping("/summaries")
-    @Operation(summary = "사용가능한 에이전트 요약 정보 조회")
-    public ApiResponse<List<AgentSummaryResponse>> getAgentSummaries() {
-        List<AgentSummaryResponse> summaries = agentService.getAvailableAgentSummaries();
-        return ApiResponse.ok(summaries);
-    }
+
 //
 //    @PostMapping("/batch")
 //    @Operation(summary = "배치 조회", description = "여러 agentId로 메타데이터를 한 번에 조회합니다.")
