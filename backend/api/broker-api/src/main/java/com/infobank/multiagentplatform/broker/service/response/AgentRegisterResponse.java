@@ -1,4 +1,4 @@
-package com.infobank.multiagentplatform.core.contract.agent.response;
+package com.infobank.multiagentplatform.broker.service.response;
 
 import com.infobank.multiagentplatform.domain.agent.model.AgentMetadata;
 import lombok.Builder;

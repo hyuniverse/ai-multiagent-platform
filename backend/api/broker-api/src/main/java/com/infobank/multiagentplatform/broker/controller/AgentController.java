@@ -1,8 +1,6 @@
 package com.infobank.multiagentplatform.broker.controller;
 
-import com.infobank.multiagentplatform.broker.controller.request.AgentBatchRequest;
 import com.infobank.multiagentplatform.broker.controller.request.AgentRegisterRequest;
-import com.infobank.multiagentplatform.broker.controller.request.AgentUpdateRequest;
 import com.infobank.multiagentplatform.broker.service.AgentService;
 import com.infobank.multiagentplatform.broker.service.response.AgentRegisterResponse;
 import com.infobank.multiagentplatform.commons.api.ApiResponse;

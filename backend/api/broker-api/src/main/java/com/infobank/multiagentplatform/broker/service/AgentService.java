@@ -1,7 +1,7 @@
 package com.infobank.multiagentplatform.broker.service;
 
 import com.infobank.multiagentplatform.broker.service.request.AgentRegisterServiceRequest;
-import com.infobank.multiagentplatform.core.contract.agent.response.AgentRegisterResponse;
+import com.infobank.multiagentplatform.broker.service.response.AgentRegisterResponse;
 import com.infobank.multiagentplatform.domain.agent.entity.AgentEntity;
 import com.infobank.multiagentplatform.domain.agent.mapper.AgentMapper;
 import com.infobank.multiagentplatform.domain.agent.model.AgentMetadata;

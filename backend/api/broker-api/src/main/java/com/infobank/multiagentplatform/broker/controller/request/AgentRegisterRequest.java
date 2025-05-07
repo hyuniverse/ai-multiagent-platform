@@ -1,4 +1,4 @@
-package com.infobank.multiagentplatform.core.contract.agent.request;
+package com.infobank.multiagentplatform.broker.controller.request;
 
 import com.infobank.multiagentplatform.broker.service.request.AgentRegisterServiceRequest;
 import com.infobank.multiagentplatform.domain.agent.type.enumtype.ProtocolType;
