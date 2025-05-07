@@ -11,11 +11,13 @@ import org.mapstruct.factory.Mappers;
 @Mapper(componentModel = "spring")
 public interface AgentMapper {
 
-    AgentMetadata toModel(AgentEntity entity);
+    AgentSnapshot toSnapshot(AgentSnapshotEntity entity);
 
-    AgentSnapshotEntity toEntity(AgentSnapshot snapshot);
+    AgentMetadata toMetadata(AgentEntity entity);
 
-    AgentSnapshot toModel(AgentSnapshotEntity entity);
+    AgentEntity toEntity(AgentMetadata metadata);
+
+    AgentSnapshotEntity toSnapshotEntity(AgentSnapshot snapshot);
 
     AgentSummary toSummary(AgentMetadata metadata);
 }

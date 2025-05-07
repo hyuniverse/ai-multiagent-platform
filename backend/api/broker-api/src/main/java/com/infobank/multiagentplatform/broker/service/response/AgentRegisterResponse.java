@@ -10,7 +10,8 @@ import java.util.List;
 @Getter
 public class AgentRegisterResponse {
 
-    private final String agentId;
+    private final String uuid;
+    private final String name;
     private final String type;
     private final String protocol;
     private final String endpoint;
@@ -21,8 +22,9 @@ public class AgentRegisterResponse {
     private final String message;
 
     @Builder
-    private AgentRegisterResponse(String agentId, String type, String protocol, String endpoint, List<String> inputTypes, List<String> outputTypes, String description, LocalDateTime registeredAt, String message) {
-        this.agentId = agentId;
+    private AgentRegisterResponse(String uuid, String name, String type, String protocol, String endpoint, List<String> inputTypes, List<String> outputTypes, String description, LocalDateTime registeredAt, String message) {
+        this.uuid = uuid;
+        this.name = name;
         this.type = type;
         this.protocol = protocol;
         this.endpoint = endpoint;
@@ -33,9 +35,10 @@ public class AgentRegisterResponse {
         this.message = message;
     }
 
-    public static AgentRegisterResponse of(AgentMetadata metadata) {
+    public static AgentRegisterResponse of(AgentMetadata metadata, String uuid) {
         return AgentRegisterResponse.builder()
-                .agentId(metadata.getId())
+                .uuid(uuid)
+                .name(metadata.getName())
                 .type(metadata.getType())
                 .protocol(metadata.getProtocol().name())
                 .endpoint(metadata.getEndpoint())

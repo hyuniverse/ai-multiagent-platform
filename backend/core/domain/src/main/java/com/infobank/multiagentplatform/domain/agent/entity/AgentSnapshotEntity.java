@@ -13,14 +13,19 @@ import lombok.*;
 public class AgentSnapshotEntity {
 
     @Id
-    private String agentId;
+    private String uuid; // AgentEntity.uuid와 동일한 ID
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private AgentStatus status;
 
+    @Column(nullable = false)
     private boolean reachable;
 
+    @Column(nullable = false)
     private long lastUpdatedTime;
 
+    @Column(nullable = false)
     private int requestCount;
+
 }

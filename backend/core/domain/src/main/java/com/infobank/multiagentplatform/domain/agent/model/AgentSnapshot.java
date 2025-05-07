@@ -9,7 +9,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AgentSnapshot {
 
-    private String agentId;
+    private String uuid;
     private AgentStatus status;
     private boolean reachable;
     private long lastUpdatedTime;
