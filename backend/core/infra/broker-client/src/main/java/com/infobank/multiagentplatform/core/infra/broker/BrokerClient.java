@@ -1,7 +1,7 @@
 package com.infobank.multiagentplatform.core.infra.broker;
 
-import com.infobank.multiagentplatform.domain.agent.model.AgentMetadata;
-import com.infobank.multiagentplatform.domain.agent.model.AgentSummary;
+import com.infobank.multiagentplatform.core.contract.agent.response.AgentDetailResponse;
+import com.infobank.multiagentplatform.core.contract.agent.response.AgentSummaryResponse;
 
 import java.util.List;
 
@@ -11,10 +11,8 @@ import java.util.List;
  */
 public interface BrokerClient {
     /** 단일 에이전트 메타데이터 조회 */
-    AgentMetadata getAgentMetadata(String agentId);
-
+    AgentDetailResponse getAgentMetadata(String agentId);
     /** 배치 조회(여러 ID) */
-    List<AgentMetadata> getAgentMetadataBatch(List<String> agentIds);
-
-    List<AgentSummary> getAgentSummaries();          // ← core/domain.AgentSummary
+    List<AgentDetailResponse> getAgentMetadataBatch(List<String> agentIds);
+    List<AgentSummaryResponse> getAgentSummaries();
 }

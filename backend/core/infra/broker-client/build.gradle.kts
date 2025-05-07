@@ -14,6 +14,7 @@ repositories {
 dependencies {
     implementation(project(":commons"))
     implementation(project(":core:domain"))
+    implementation(project(":core:contract"))
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter")
     compileOnly("org.projectlombok:lombok:1.18.30")
