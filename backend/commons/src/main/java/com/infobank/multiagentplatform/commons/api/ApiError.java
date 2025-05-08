@@ -1,33 +1,26 @@
-package com.infobank.multiagentplatform.commons.api.dto;
+package com.infobank.multiagentplatform.commons.api;
 
-/**
- * 일관된 에러 응답 형식을 나타내는 DTO
- */
+import lombok.Builder;
+import lombok.Getter;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Getter
+@Builder
 public class ApiError {
-    private String code;
+    private LocalDateTime timestamp;
+    private int status;
     private String message;
+    private String path;
+    private String traceId;
 
-    public ApiError() {
-    }
+    private final List<FieldError> fieldErrors;
 
-    public ApiError(String code, String message) {
-        this.code = code;
-        this.message = message;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
+    @Getter
+    @Builder
+    public static class FieldError {
+        private final String field;
+        private final String message;
     }
 }
