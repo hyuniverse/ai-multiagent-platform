@@ -17,7 +17,8 @@ import java.util.List;
 public class AgentEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.UUID) // ✅ 여기에 붙입니다.
+    @Column(length = 36)
     private String uuid;
 
     @Column(nullable = false)
@@ -47,9 +48,9 @@ public class AgentEntity {
     @Column(length = 512)
     private String description;
 
-    public static AgentEntity from(AgentMetadata metadata, String uuid) {
+    // ✅ uuid는 자동 생성되므로 파라미터에서 제거합니다.
+    public static AgentEntity from(AgentMetadata metadata) {
         return AgentEntity.builder()
-                .uuid(uuid)
                 .name(metadata.getName())
                 .type(metadata.getType())
                 .protocol(metadata.getProtocol())

@@ -8,6 +8,6 @@ public class LoggingAgentPostProcessor implements AgentPostProcessor {
 
     @Override
     public void afterRegister(AgentMetadata metadata) {
-        System.out.println("✅ Agent 등록 완료: " + metadata.getId());
+        System.out.println("✅ Agent 등록 완료: " + metadata.getEndpoint());
     }
 }

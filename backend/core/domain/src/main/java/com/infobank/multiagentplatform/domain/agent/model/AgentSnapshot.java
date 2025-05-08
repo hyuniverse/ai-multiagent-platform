@@ -12,7 +12,6 @@ public class AgentSnapshot {
     private String uuid;
     private AgentStatus status;
     private boolean reachable;
-    private long lastUpdatedTime;
     private int requestCount;
 }
 
