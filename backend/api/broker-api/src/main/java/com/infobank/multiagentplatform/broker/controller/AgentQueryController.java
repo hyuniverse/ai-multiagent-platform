@@ -6,17 +6,20 @@ import com.infobank.multiagentplatform.core.contract.agent.request.AgentBatchReq
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentDetailResponse;
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentSummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@RestController
+@RequestMapping("/agents")
+@RequiredArgsConstructor
+@Tag(name = "Agent", description = "에이전트 등록/관리 API")
 public class AgentQueryController {
 
-    AgentQueryService agentQueryService;
+    private final AgentQueryService agentQueryService;
 
     @GetMapping
     @Operation(summary = "전체 에이전트 조회")

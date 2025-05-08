@@ -49,7 +49,7 @@ public class AgentRegisterRequest {
     private String description;
 
     @Builder
-    public AgentRegisterRequest(String name, String type, ProtocolType protocol, String endpoint,
+    private AgentRegisterRequest(String name, String type, ProtocolType protocol, String endpoint,
                                 boolean hasMemory, String memoryType, List<String> inputTypes,
                                 List<String> outputTypes, String description) {
         this.name = name;

@@ -4,10 +4,13 @@ import com.infobank.multiagentplatform.broker.controller.request.AgentRegisterRe
 import com.infobank.multiagentplatform.broker.service.AgentService;
 import com.infobank.multiagentplatform.broker.service.response.AgentRegisterResponse;
 import com.infobank.multiagentplatform.commons.api.ApiResponse;
+import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,11 +23,17 @@ import static com.infobank.multiagentplatform.commons.api.ApiResponse.created;
 public class AgentController {
 
     private final AgentService agentService;
+    private final ObservationRegistry observationRegistry;
+
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "에이전트 등록", description = "에이전트를 등록합니다. ID가 중복되면 409 에러를 반환합니다.")
+    @Timed(value = "agent.register", description = "Time to register agent")
     public ApiResponse<AgentRegisterResponse> registerAgent(@Valid @RequestBody AgentRegisterRequest request) {
+        // traceId 저장
+        String traceId = MDC.get("traceId"); // Spring Boot 3.4.x + micrometer-tracing 기준
+        MDC.put("traceId", traceId);
         AgentRegisterResponse response = agentService.registerAgent(request.toServiceRequest());
 
         return created(response);

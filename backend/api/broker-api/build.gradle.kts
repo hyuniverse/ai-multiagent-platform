@@ -16,6 +16,7 @@ dependencies {
     implementation(project(":commons"))
     implementation(project(":foundation:resilience"))
     implementation(project(":core:contract"))
+    implementation(project(":core:infra:invoker"))
     implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.4.4"))
 
     // Spring Web
@@ -29,6 +30,8 @@ dependencies {
 
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
 
+    implementation("io.micrometer:micrometer-core")
+    implementation("io.micrometer:micrometer-observation")
     // Lombok
     compileOnly("org.projectlombok:lombok:1.18.30")
     annotationProcessor("org.projectlombok:lombok:1.18.30")
