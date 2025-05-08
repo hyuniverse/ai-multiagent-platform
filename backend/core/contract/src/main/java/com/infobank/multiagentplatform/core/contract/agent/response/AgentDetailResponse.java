@@ -3,6 +3,7 @@ package com.infobank.multiagentplatform.core.contract.agent.response;
 import com.infobank.multiagentplatform.domain.agent.model.AgentMetadata;
 import com.infobank.multiagentplatform.domain.agent.model.AgentSnapshot;
 import com.infobank.multiagentplatform.domain.agent.type.enumtype.AgentStatus;
+import com.infobank.multiagentplatform.domain.agent.type.enumtype.ProtocolType;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -15,7 +16,7 @@ public class AgentDetailResponse {
 
     private final String name;
     private final String type;
-    private final String protocol;
+    private final ProtocolType protocol;
     private final String endpoint;
 
     private final boolean hasMemory;
@@ -27,14 +28,13 @@ public class AgentDetailResponse {
 
     private final AgentStatus status;
     private final boolean reachable;
-    private final long lastUpdatedTime;
     private final int requestCount;
 
     @Builder
-    private AgentDetailResponse(String uuid, String name, String type, String protocol, String endpoint,
+    private AgentDetailResponse(String uuid, String name, String type, ProtocolType protocol, String endpoint,
                                 boolean hasMemory, String memoryType, List<String> inputTypes,
                                 List<String> outputTypes, String description, AgentStatus status,
-                                boolean reachable, long lastUpdatedTime, int requestCount) {
+                                boolean reachable, int requestCount) {
         this.uuid = uuid;
         this.name = name;
         this.type = type;
@@ -47,7 +47,6 @@ public class AgentDetailResponse {
         this.description = description;
         this.status = status;
         this.reachable = reachable;
-        this.lastUpdatedTime = lastUpdatedTime;
         this.requestCount = requestCount;
     }
 
@@ -56,7 +55,7 @@ public class AgentDetailResponse {
                 .uuid(uuid)
                 .name(metadata.getName())
                 .type(metadata.getType())
-                .protocol(metadata.getProtocol().name())
+                .protocol(metadata.getProtocol())
                 .endpoint(metadata.getEndpoint())
                 .hasMemory(metadata.getMemory().isHasMemory())
                 .memoryType(metadata.getMemory().getMemoryType())
@@ -65,7 +64,6 @@ public class AgentDetailResponse {
                 .description(metadata.getDescription())
                 .status(snapshot.getStatus())
                 .reachable(snapshot.isReachable())
-                .lastUpdatedTime(snapshot.getLastUpdatedTime())
                 .requestCount(snapshot.getRequestCount())
                 .build();
     }

@@ -13,6 +13,9 @@ dependencies {
     implementation(project(":commons"))
     implementation(project(":core:domain"))
 
+    implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.4.4"))
+
+
     // Spring Web
     implementation("org.springframework.boot:spring-boot-starter-web")
 

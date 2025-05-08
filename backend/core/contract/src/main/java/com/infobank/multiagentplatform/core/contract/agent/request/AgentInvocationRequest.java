@@ -1,12 +1,11 @@
-package com.infobank.multiagentplatform.orchestrator.service.request;
+package com.infobank.multiagentplatform.core.contract.agent.request;
 
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentDetailResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 
-@Data
-@AllArgsConstructor
+@Getter
 public class AgentInvocationRequest {
 
     private final String endpoint;
