@@ -1,7 +1,9 @@
 package com.infobank.multiagentplatform.orchestrator.model;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.infobank.multiagentplatform.domain.agent.task.AgentTask;
+import com.infobank.multiagentplatform.orchestrator.model.plan.AgentTask;
+import com.infobank.multiagentplatform.orchestrator.model.plan.ExecutionPlan;
+import com.infobank.multiagentplatform.orchestrator.model.plan.TaskBlock;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

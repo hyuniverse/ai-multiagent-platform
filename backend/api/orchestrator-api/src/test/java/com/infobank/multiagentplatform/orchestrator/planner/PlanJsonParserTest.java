@@ -2,7 +2,8 @@ package com.infobank.multiagentplatform.orchestrator.planner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.infobank.multiagentplatform.orchestrator.exception.PlanParsingException;
-import com.infobank.multiagentplatform.orchestrator.model.ExecutionPlan;
+import com.infobank.multiagentplatform.orchestrator.model.plan.ExecutionPlan;
+import com.infobank.multiagentplatform.orchestrator.service.planner.PlanJsonParser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

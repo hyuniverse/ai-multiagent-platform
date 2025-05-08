@@ -1,8 +1,6 @@
 package com.infobank.multiagentplatform.orchestrator.application;
 
-import com.infobank.multiagentplatform.domain.agent.task.AgentResult;
-import com.infobank.multiagentplatform.orchestrator.model.ExecutionResult;
-import com.infobank.multiagentplatform.orchestrator.model.TaskResult;
+import com.infobank.multiagentplatform.orchestrator.model.result.TaskResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
