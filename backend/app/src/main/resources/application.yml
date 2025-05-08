@@ -18,8 +18,21 @@ spring:
       hibernate:
         format_sql: true
 
+  jackson:
+    mapper:
+      ACCEPT_CASE_INSENSITIVE_ENUMS: true
+
 server:
   port: 8080
+
+broker:
+  service:
+    url: http://localhost:8080
+
+orchestrator:
+  http:
+    connect-timeout: 1000   # ms
+    read-timeout: 2000      # ms
 
 springdoc:
   api-docs:
@@ -43,7 +56,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: beans,health,info
+        include: beans, health, info, prometheus, httptrace
 
 # 로깅 레벨 조정: 빈 생성 로그 확인
 logging:

@@ -3,6 +3,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
     id("application")
 }
+
 group = "com.infobank"
 
 repositories {
@@ -18,19 +19,32 @@ dependencies {
     implementation(project(":api:broker-api"))
     implementation(project(":api:orchestrator-api"))
     implementation(project(":config"))
+    implementation(project(":core:infra:broker-client"))
+
+    // Lombok
+    compileOnly("org.projectlombok:lombok:1.18.30")
+    annotationProcessor("org.projectlombok:lombok:1.18.30")
     implementation("com.h2database:h2")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
 
     // 설정 프로퍼티 메타데이터 생성기
     compileOnly("org.springframework.boot:spring-boot-configuration-processor:3.4.4")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:3.4.4")
 
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.micrometer:micrometer-core")
+    implementation("io.micrometer:micrometer-tracing")
+    implementation("io.micrometer:micrometer-tracing-bridge-brave")
+    implementation("io.micrometer:micrometer-observation")
+    implementation("io.zipkin.reporter2:zipkin-reporter-brave")
+    implementation("io.micrometer:micrometer-registry-prometheus")
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")
+
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")

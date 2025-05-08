@@ -3,11 +3,11 @@ package com.infobank.multiagentplatform.app;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.infobank.multiagentplatform.domain.agent.model.AgentSummary;
 import com.infobank.multiagentplatform.orchestrator.config.LLMClientProperties;
-import com.infobank.multiagentplatform.orchestrator.model.ExecutionPlan;
-import com.infobank.multiagentplatform.orchestrator.model.StandardRequest;
-import com.infobank.multiagentplatform.orchestrator.planner.PlanJsonParser;
-import com.infobank.multiagentplatform.orchestrator.planner.PromptBuilder;
-import com.infobank.multiagentplatform.orchestrator.planner.llm.OpenAIClient;
+import com.infobank.multiagentplatform.orchestrator.model.plan.ExecutionPlan;
+import com.infobank.multiagentplatform.orchestrator.controller.request.OrchestrationRequest;
+import com.infobank.multiagentplatform.orchestrator.service.planner.PlanJsonParser;
+import com.infobank.multiagentplatform.orchestrator.service.planner.PromptBuilder;
+import com.infobank.multiagentplatform.orchestrator.llm.OpenAIClient;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +37,7 @@ public class OpenAIClientIntegrationTest {
     @DisplayName("실제 OpenAI API를 호출하여 ExecutionPlan을 정상 수립할 수 있다")
     void should_call_openai_and_build_execution_plan_successfully() {
         // given
-        StandardRequest request = StandardRequest.builder()
+        OrchestrationRequest request = OrchestrationRequest.builder()
                 .rawText("이 뉴스 기사에 대해 요약하고, 감정 분석, 주제 분류를 해줘.")
                 .inputType("text")
                 .build();
