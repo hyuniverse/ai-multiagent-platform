@@ -6,6 +6,7 @@ import com.infobank.multiagentplatform.core.contract.agent.request.AgentBatchReq
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentDetailResponse;
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentSummaryResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;

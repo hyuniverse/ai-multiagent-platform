@@ -1,44 +1,50 @@
 package com.infobank.multiagentplatform.invoker.infrastructure.rest;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.infobank.multiagentplatform.domain.agent.task.AgentCallTask;
+import com.infobank.multiagentplatform.core.contract.agent.request.AgentInvocationRequest;
+import com.infobank.multiagentplatform.core.contract.agent.response.AgentInvocationResponse;
 import com.infobank.multiagentplatform.invoker.domain.AgentInvoker;
-import com.infobank.multiagentplatform.domain.agent.task.AgentRequest;
-import com.infobank.multiagentplatform.domain.agent.task.AgentResult;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
-
+/**
+ * REST 기반 AgentInvoker 구현체 (WebClient 사용)
+ */
 @Component
 public class RestAgentInvoker implements AgentInvoker {
 
-    private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final WebClient webClient;
+    private final ObjectMapper objectMapper;
+
+    public RestAgentInvoker(WebClient.Builder builder, ObjectMapper objectMapper) {
+        this.webClient = builder.build();
+        this.objectMapper = objectMapper;
+    }
 
     @Override
-    public AgentResult invoke(AgentCallTask task) {
-//        context.log("Invoking REST agent: " + task.getAgentId());
-
+    public AgentInvocationResponse invoke(AgentInvocationRequest request) {
         try {
-            AgentRequest request = new AgentRequest(task.getPayload()); // 내부 생성
-            String requestBody = objectMapper.writeValueAsString(request);
+            // 1) HTTP 호출 및 원본 응답 수신
+            String raw = webClient.post()
+                    .uri(request.getEndpoint())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(request)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, resp -> resp.createException().flatMap(Mono::error))
+                    .bodyToMono(String.class)
+                    .block();
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
+            // 2) JSON 파싱
+            JsonNode parsed = objectMapper.readTree(raw);
 
-            ResponseEntity<String> response = restTemplate.postForEntity(
-                    task.getEndpoint(), entity, String.class);
-
-//            context.recordCall(task.getAgentId(), true, "Success");
-            return new AgentResult(response.getBody(), null);
+            // 3) DTO 반환
+            return AgentInvocationResponse.of(raw, parsed);
 
         } catch (Exception e) {
-//            context.recordCall(task.getAgentId(), false, "REST 실패: " + e.getMessage());
             throw new RuntimeException("REST agent 호출 실패", e);
         }
     }

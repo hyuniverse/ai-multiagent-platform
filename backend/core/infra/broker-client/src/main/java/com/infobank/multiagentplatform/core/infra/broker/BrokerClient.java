@@ -2,6 +2,7 @@ package com.infobank.multiagentplatform.core.infra.broker;
 
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentDetailResponse;
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentSummaryResponse;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 

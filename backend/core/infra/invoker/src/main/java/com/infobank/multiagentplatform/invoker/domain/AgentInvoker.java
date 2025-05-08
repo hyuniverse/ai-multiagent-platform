@@ -1,8 +1,9 @@
 package com.infobank.multiagentplatform.invoker.domain;
 
-import com.infobank.multiagentplatform.domain.agent.task.AgentCallTask;
-import com.infobank.multiagentplatform.domain.agent.task.AgentResult;
+
+import com.infobank.multiagentplatform.core.contract.agent.request.AgentInvocationRequest;
+import com.infobank.multiagentplatform.core.contract.agent.response.AgentInvocationResponse;
 
 public interface AgentInvoker {
-    AgentResult invoke(AgentCallTask task);
+    AgentInvocationResponse invoke(AgentInvocationRequest task);
 }
