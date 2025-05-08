@@ -1,20 +1,22 @@
-package com.infobank.multiagentplatform.orchestrator.model;
+package com.infobank.multiagentplatform.orchestrator.model.result;
 
 
-import com.infobank.multiagentplatform.core.contract.agent.response.AgentInvocationResponse;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor
 public class TaskResult {
     private final String taskId;
     private final String rawResult;
     private final Object parsedResult;
 
-
     @Builder
+    private TaskResult(String taskId, String rawResult, Object parsedResult) {
+        this.taskId = taskId;
+        this.rawResult = rawResult;
+        this.parsedResult = parsedResult;
+    }
+
     public static TaskResult of(String taskId,  String rawResult, Object parsedResult) {
         return TaskResult.builder()
                 .taskId(taskId)
@@ -22,5 +24,4 @@ public class TaskResult {
                 .parsedResult(parsedResult)
                 .build();
     }
-
 }

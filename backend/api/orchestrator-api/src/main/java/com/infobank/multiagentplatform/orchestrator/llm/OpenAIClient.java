@@ -1,4 +1,4 @@
-package com.infobank.multiagentplatform.orchestrator.service.planner.llm;
+package com.infobank.multiagentplatform.orchestrator.llm;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentSummaryResponse;
@@ -7,6 +7,7 @@ import com.infobank.multiagentplatform.orchestrator.model.plan.ExecutionPlan;
 import com.infobank.multiagentplatform.orchestrator.controller.request.OrchestrationRequest;
 import com.infobank.multiagentplatform.orchestrator.service.planner.PlanJsonParser;
 import com.infobank.multiagentplatform.orchestrator.service.planner.PromptBuilder;
+import com.infobank.multiagentplatform.orchestrator.service.request.OrchestrationServiceRequest;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -66,10 +67,15 @@ public class OpenAIClient implements LLMClient {
     }
 
     @Override
-    public ExecutionPlan plan(OrchestrationRequest request, List<AgentSummaryResponse> agentSummaries) {
+    public ExecutionPlan plan(OrchestrationServiceRequest request, List<AgentSummaryResponse> agentSummaries) {
         String prompt = promptBuilder.buildPrompt(request, agentSummaries);
         String content = callOpenAI(prompt);
         return planJsonParser.parse(content);
+    }
+
+    @Override
+    public String generateText(String prompt) {
+        return callOpenAI(prompt);
     }
 
     /**

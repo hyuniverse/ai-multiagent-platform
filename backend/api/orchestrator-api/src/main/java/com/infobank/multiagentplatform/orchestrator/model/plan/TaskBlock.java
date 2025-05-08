@@ -1,8 +1,7 @@
-package com.infobank.multiagentplatform.orchestrator.model;
+package com.infobank.multiagentplatform.orchestrator.model.plan;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.infobank.multiagentplatform.domain.agent.task.AgentTask;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

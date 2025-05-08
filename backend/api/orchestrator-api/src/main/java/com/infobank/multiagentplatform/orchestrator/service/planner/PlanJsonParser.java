@@ -1,9 +1,9 @@
-package com.infobank.multiagentplatform.orchestrator.planner;
+package com.infobank.multiagentplatform.orchestrator.service.planner;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.infobank.multiagentplatform.orchestrator.exception.PlanParsingException;
-import com.infobank.multiagentplatform.orchestrator.model.ExecutionPlan;
+import com.infobank.multiagentplatform.orchestrator.model.plan.ExecutionPlan;
 import org.springframework.stereotype.Component;
 
 import static com.infobank.multiagentplatform.orchestrator.messages.ExceptionMessages.EMPTY_PLAN_EXCEPTION;

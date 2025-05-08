@@ -1,4 +1,4 @@
-package com.infobank.multiagentplatform.domain.agent.task;
+package com.infobank.multiagentplatform.orchestrator.model.plan;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

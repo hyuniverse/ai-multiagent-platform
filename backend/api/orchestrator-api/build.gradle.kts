@@ -13,10 +13,12 @@ repositories {
 
 dependencies {
     implementation(project(":core:domain"))
+    implementation(project(":core:contract"))
     implementation(project(":core:infra:invoker"))
     implementation(project(":core:infra:broker-client"))
     implementation(project(":commons"))
     implementation(project(":foundation:resilience"))
+    implementation(project(":config"))
 
     implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
 

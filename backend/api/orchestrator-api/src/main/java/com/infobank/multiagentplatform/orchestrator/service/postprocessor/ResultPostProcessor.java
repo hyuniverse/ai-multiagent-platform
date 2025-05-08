@@ -1,9 +1,10 @@
-package com.infobank.multiagentplatform.orchestrator.application;
+package com.infobank.multiagentplatform.orchestrator.service.postprocessor;
 
-import com.infobank.multiagentplatform.orchestrator.model.ExecutionResult;
+import com.infobank.multiagentplatform.orchestrator.model.result.TaskResult;
+import com.infobank.multiagentplatform.orchestrator.service.response.OrchestrationResponse;
+
 import java.util.Map;
-import com.infobank.multiagentplatform.domain.agent.task.AgentResult;
 
 public interface ResultPostProcessor {
-    ExecutionResult process(Map<String,AgentResult> rawResults);
+    OrchestrationResponse process(Map<String, TaskResult> rawResults);
 }
