@@ -10,7 +10,6 @@ repositories {
 
 dependencies {
     implementation(project(":commons"))
-    implementation(project(":foundation:resilience"))
 
     // ✅ BOM 적용 (버전 명시 없이 안전한 최신 버전 관리)
     implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.4.4"))

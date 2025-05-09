@@ -14,10 +14,11 @@ repositories {
 dependencies {
     implementation(project(":core:domain"))
     implementation(project(":commons"))
-    implementation(project(":foundation:resilience"))
     implementation(project(":core:contract"))
     implementation(project(":core:infra:invoker"))
+
     implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.4.4"))
+    implementation(platform("io.github.resilience4j:resilience4j-bom:2.0.2"))
 
     // Spring Web
     implementation("org.springframework.boot:spring-boot-starter-web")
@@ -30,6 +31,8 @@ dependencies {
 
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
 
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+
     implementation("io.micrometer:micrometer-core")
     implementation("io.micrometer:micrometer-observation")
     // Lombok
@@ -39,6 +42,8 @@ dependencies {
     // Jackson
     implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.17.0")
+
+    implementation("io.github.resilience4j:resilience4j-spring-boot3")
 
     // 테스트
     testImplementation(platform("org.junit:junit-bom:5.10.0"))

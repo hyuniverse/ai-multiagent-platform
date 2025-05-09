@@ -17,13 +17,14 @@ dependencies {
     implementation(project(":core:infra:invoker"))
     implementation(project(":core:infra:broker-client"))
     implementation(project(":commons"))
-    implementation(project(":foundation:resilience"))
     implementation(project(":config"))
 
     implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
 
 
     implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.4.4"))
+    implementation(platform("io.github.resilience4j:resilience4j-bom:2.0.2"))
+
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
 
     // Spring Web
@@ -41,6 +42,9 @@ dependencies {
     // Jackson
     implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.17.0")
+
+    implementation("io.github.resilience4j:resilience4j-spring-boot3")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
 
     // 테스트
     testImplementation("org.springframework.boot:spring-boot-starter-test")

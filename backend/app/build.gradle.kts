@@ -15,11 +15,13 @@ application {
 }
 
 dependencies {
-    implementation(project(":foundation:resilience"))
     implementation(project(":api:broker-api"))
     implementation(project(":api:orchestrator-api"))
     implementation(project(":config"))
     implementation(project(":core:infra:broker-client"))
+
+    implementation(platform("io.github.resilience4j:resilience4j-bom:2.0.2"))
+
 
     // Lombok
     compileOnly("org.projectlombok:lombok:1.18.30")
@@ -29,10 +31,13 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
 
     // 설정 프로퍼티 메타데이터 생성기
     compileOnly("org.springframework.boot:spring-boot-configuration-processor:3.4.4")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:3.4.4")
+
+    implementation("io.github.resilience4j:resilience4j-spring-boot3")
 
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("io.micrometer:micrometer-core")
