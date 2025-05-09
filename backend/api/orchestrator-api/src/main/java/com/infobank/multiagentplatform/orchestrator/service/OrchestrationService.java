@@ -2,7 +2,6 @@ package com.infobank.multiagentplatform.orchestrator.service;
 
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentSummaryResponse;
 import com.infobank.multiagentplatform.orchestrator.model.plan.ExecutionPlan;
-import com.infobank.multiagentplatform.orchestrator.controller.request.OrchestrationRequest;
 import com.infobank.multiagentplatform.orchestrator.model.result.TaskResult;
 import com.infobank.multiagentplatform.orchestrator.service.executor.ExecutionPlanExecutor;
 import com.infobank.multiagentplatform.orchestrator.service.planner.TaskPlanner;
@@ -12,6 +11,7 @@ import com.infobank.multiagentplatform.orchestrator.service.request.Orchestratio
 import com.infobank.multiagentplatform.orchestrator.service.response.OrchestrationResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
@@ -33,7 +33,7 @@ public class OrchestrationService {
     private final ExecutionPlanExecutor executor;
     private final ResultPostProcessor postProcessor;
 
-    public OrchestrationResponse orchestrate(OrchestrationServiceRequest request) {
+    public Mono<OrchestrationResponse> orchestrate(OrchestrationServiceRequest request) {
 
         // 1. 사용 가능한 에이전트 요약 DTO 조회
         List<AgentSummaryResponse> agents = brokerClient.getAgentSummaries();
@@ -42,7 +42,7 @@ public class OrchestrationService {
         ExecutionPlan plan = planner.plan(request, agents);
 
         // 3. 실행 계획 수행
-        Map<String, TaskResult> rawResult = executor.executePlan(plan);
+        Mono<Map<String, TaskResult>> rawResult = executor.executePlanReactive(plan);
 
         return postProcessor.process(rawResult);
     }

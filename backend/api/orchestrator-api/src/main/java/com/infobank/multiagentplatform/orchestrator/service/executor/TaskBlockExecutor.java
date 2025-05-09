@@ -6,6 +6,8 @@ import com.infobank.multiagentplatform.orchestrator.model.plan.TaskBlock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 import java.util.Map;
@@ -17,17 +19,15 @@ public class TaskBlockExecutor {
     private final SingleTaskExecutor singleTaskExecutor;
     private final TaskExecutor planTaskExecutor;
 
-    public void executeBlock(
-            TaskBlock block,
-            Map<String, AgentDetailResponse> metadataMap,
-            Map<String, TaskResult> results
-    ) {
-        List<CompletableFuture<Void>> futures = block.getTasks().stream()
-                .map(task -> CompletableFuture.runAsync(() -> {
-                    TaskResult r = singleTaskExecutor.execute(task, metadataMap, results);
-                    results.put(task.getId(), r); // taskId, taskResult
-                }, planTaskExecutor))
-                .toList();
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+    public Flux<TaskResult> executeBlockReactive(TaskBlock block,
+                                                 Map<String, AgentDetailResponse> metadataMap,
+                                                 Map<String, TaskResult> results) {
+        return Flux.fromIterable(block.getTasks())
+                .flatMap(task ->
+                        singleTaskExecutor
+                                .executeReactive(task, metadataMap, results)
+                                .subscribeOn(Schedulers.fromExecutor(planTaskExecutor))
+                );
     }
 }
+
