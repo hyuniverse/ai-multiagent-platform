@@ -1,8 +1,9 @@
-// AgentSummaryResponse.java
 package com.infobank.multiagentplatform.core.contract.agent.response;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.infobank.multiagentplatform.domain.agent.model.AgentMetadata;
-import lombok.*;
+import lombok.Getter;
 
 import java.util.List;
 
@@ -17,8 +18,14 @@ public class AgentSummaryResponse {
     private final List<String> inputTypes;
     private final List<String> outputTypes;
 
-    @Builder
-    private AgentSummaryResponse(String uuid, String name, String description, List<String> inputTypes, List<String> outputTypes) {
+    @JsonCreator
+    public AgentSummaryResponse(
+            @JsonProperty("uuid") String uuid,
+            @JsonProperty("name") String name,
+            @JsonProperty("description") String description,
+            @JsonProperty("inputTypes") List<String> inputTypes,
+            @JsonProperty("outputTypes") List<String> outputTypes
+    ) {
         this.uuid = uuid;
         this.name = name;
         this.description = description;
@@ -27,14 +34,12 @@ public class AgentSummaryResponse {
     }
 
     public static AgentSummaryResponse of(String uuid, AgentMetadata metadata) {
-        return AgentSummaryResponse.builder()
-                .uuid(uuid)
-                .name(metadata.getName())
-                .description(metadata.getDescription())
-                .inputTypes(metadata.getInputTypes())
-                .outputTypes(metadata.getOutputTypes())
-                .build();
+        return new AgentSummaryResponse(
+                uuid,
+                metadata.getName(),
+                metadata.getDescription(),
+                metadata.getInputTypes(),
+                metadata.getOutputTypes()
+        );
     }
-
-
 }

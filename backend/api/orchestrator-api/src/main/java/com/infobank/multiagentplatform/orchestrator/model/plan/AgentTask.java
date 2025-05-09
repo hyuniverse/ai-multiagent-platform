@@ -22,8 +22,8 @@ public class AgentTask {
     @Builder
     @JsonCreator
     private AgentTask(
-            @JsonProperty("taskId") String id,
-            @JsonProperty("agent-UUId") String agentId,
+            @JsonProperty("id") String id,
+            @JsonProperty("agentId") String agentId,
             @JsonProperty("instruction") String instruction,
             @JsonProperty("inputFrom") String inputFrom
     ) {

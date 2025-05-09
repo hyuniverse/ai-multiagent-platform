@@ -1,5 +1,8 @@
 package com.infobank.multiagentplatform.core.contract.agent.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.infobank.multiagentplatform.domain.agent.model.AgentMetadata;
 import com.infobank.multiagentplatform.domain.agent.model.AgentSnapshot;
 import com.infobank.multiagentplatform.domain.agent.type.enumtype.AgentStatus;
@@ -10,6 +13,8 @@ import lombok.Getter;
 import java.util.List;
 
 @Getter
+@JsonDeserialize(builder = AgentDetailResponse.AgentDetailResponseBuilder.class)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AgentDetailResponse {
 
     private final String uuid;
@@ -67,4 +72,7 @@ public class AgentDetailResponse {
                 .requestCount(snapshot.getRequestCount())
                 .build();
     }
+
+    @JsonPOJOBuilder(withPrefix = "")
+    public static class AgentDetailResponseBuilder {}
 }
