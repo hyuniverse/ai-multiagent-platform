@@ -7,12 +7,10 @@ import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
 
-@RestControllerAdvice(basePackages = "com.infobank.multiagentplatform.orchestrator")
 public class OrchestratorExceptionHandler {
 
     @ExceptionHandler(CommonExceptions.ResourceNotFoundException.class)
