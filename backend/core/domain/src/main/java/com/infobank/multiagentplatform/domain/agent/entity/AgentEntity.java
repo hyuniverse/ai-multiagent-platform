@@ -48,7 +48,6 @@ public class AgentEntity {
     @Column(length = 512)
     private String description;
 
-    // ✅ uuid는 자동 생성되므로 파라미터에서 제거합니다.
     public static AgentEntity from(AgentMetadata metadata) {
         return AgentEntity.builder()
                 .name(metadata.getName())
@@ -60,5 +59,16 @@ public class AgentEntity {
                 .outputTypes(metadata.getOutputTypes())
                 .description(metadata.getDescription())
                 .build();
+    }
+
+    public void updateFrom(AgentMetadata metadata) {
+        this.name = metadata.getName();
+        this.endpoint = metadata.getEndpoint();
+        this.type = metadata.getType();
+        this.protocol = metadata.getProtocol();
+        this.memory = metadata.getMemory();
+        this.inputTypes = metadata.getInputTypes();
+        this.outputTypes = metadata.getOutputTypes();
+        this.description = metadata.getDescription();
     }
 }
