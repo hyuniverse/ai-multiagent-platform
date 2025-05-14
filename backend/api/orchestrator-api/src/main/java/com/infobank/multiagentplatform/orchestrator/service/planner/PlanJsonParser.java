@@ -6,8 +6,7 @@ import com.infobank.multiagentplatform.orchestrator.exception.PlanParsingExcepti
 import com.infobank.multiagentplatform.orchestrator.model.plan.ExecutionPlan;
 import org.springframework.stereotype.Component;
 
-import static com.infobank.multiagentplatform.orchestrator.messages.ExceptionMessages.EMPTY_PLAN_EXCEPTION;
-import static com.infobank.multiagentplatform.orchestrator.messages.ExceptionMessages.JSON_PARSE_EXCEPTION;
+import static com.infobank.multiagentplatform.orchestrator.messages.ExceptionMessages.*;
 
 @Component
 public class PlanJsonParser {
@@ -23,6 +22,7 @@ public class PlanJsonParser {
      */
     public ExecutionPlan parse(String rawJson) {
         try {
+            System.out.println("Generated Plan JSON: " + rawJson);
             // Remove markdown code block if exists
             if (rawJson.startsWith("```")) {
                 rawJson = rawJson.replaceAll("(?s)```(?:json)?\\s*", "")  // remove opening ```
@@ -37,9 +37,16 @@ public class PlanJsonParser {
     }
 
     private void validatePlan(ExecutionPlan plan) {
-        if (plan.getBlocks().isEmpty()) {
+        if (plan.getBlocks() == null || plan.getBlocks().isEmpty()) {
             throw new PlanParsingException(EMPTY_PLAN_EXCEPTION);
         }
-        // TODO: ATAM 기반 시나리오별 검증 로직 추가
+        plan.getBlocks().forEach(block -> {
+            if (block.getTasks() == null) {
+                throw new PlanParsingException(INVALID_BLOCK_SCHEMA);
+            }
+            if (block.getTasks().isEmpty()) {
+                throw new PlanParsingException(EMPTY_TASKS_EXCEPTION);
+            }
+        });
     }
 }

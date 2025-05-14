@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/agents")
+@RequestMapping("/api/v1/agents")
 @RequiredArgsConstructor
 @Tag(name = "Agent", description = "에이전트 등록/관리 API")
 public class AgentQueryController {

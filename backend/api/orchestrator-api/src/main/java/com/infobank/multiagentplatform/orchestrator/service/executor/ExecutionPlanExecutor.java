@@ -1,9 +1,10 @@
 package com.infobank.multiagentplatform.orchestrator.service.executor;
 
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentDetailResponse;
+import com.infobank.multiagentplatform.domain.agent.type.enumtype.AgentStatus;
+import com.infobank.multiagentplatform.orchestrator.exception.AgentInactiveException;
 import com.infobank.multiagentplatform.orchestrator.model.plan.AgentTask;
 import com.infobank.multiagentplatform.orchestrator.model.plan.ExecutionPlan;
-import com.infobank.multiagentplatform.orchestrator.model.plan.TaskBlock;
 import com.infobank.multiagentplatform.orchestrator.model.result.TaskResult;
 import com.infobank.multiagentplatform.core.infra.broker.BrokerClient;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -14,7 +15,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,55 +28,50 @@ public class ExecutionPlanExecutor {
     private final BrokerClient brokerClient;        // 이제 Mono<List<AgentDetailResponse>> 반환
     private final TaskBlockExecutor blockExecutor; // Flux<TaskResult> 반환
 
-    @CircuitBreaker(name = "executor-circuit", fallbackMethod = "fallbackExecutePlanReactive")
-    @Retry(name = "executor-retry")
-    public Mono<Map<String, TaskResult>> executePlanReactive(ExecutionPlan plan) {
-        // 1) 모든 에이전트 ID 수집
-        List<String> agentIds = plan.getBlocks().stream()
-                .flatMap(b -> b.getTasks().stream().map(AgentTask::getAgentId))
-                .distinct()
-                .collect(Collectors.toList());
+    @CircuitBreaker(name = "executorCircuit", fallbackMethod = "fallbackExecutePlanReactive")
+    @Retry(name = "executorRetry")
+    public Mono<Map<String, TaskResult>> executePlanReactive(Mono<ExecutionPlan> planMono) {
+        return planMono.flatMap(plan -> {
+            List<String> agentIds = plan.getBlocks().stream()
+                    .flatMap(b -> b.getTasks().stream().map(AgentTask::getAgentId))
+                    .distinct()
+                    .collect(Collectors.toList());
 
-        // 2) metadataMap 준비 & 블록별 Reactive 실행 → Map<String, TaskResult> 생성
-        return Mono
-                .fromCallable(() -> brokerClient.getAgentMetadataBatch(agentIds))
-                .flatMapMany(Flux::fromIterable)
-                .collectMap(AgentDetailResponse::getUuid, Function.identity())
-                .flatMap(metadataMap ->
-                        Flux.fromIterable(plan.getBlocks())
-                                .flatMap(block ->
-                                        blockExecutor.executeBlockReactive(
-                                                block,
-                                                metadataMap,
-                                                new ConcurrentHashMap<>()
-                                        )
-                                )
-                                .collectMap(TaskResult::getTaskId, tr -> tr)
+            // 2) metadataMap 조회
+            return brokerClient.getAgentMetadataBatch(agentIds)
+                    .flatMapMany(Flux::fromIterable)
+                    .collectMap(AgentDetailResponse::getUuid, Function.identity())
+                    .flatMap(metadataMap -> {
+                            metadataMap.values().stream()
+                                    .filter(meta -> meta.getStatus() != AgentStatus.ACTIVE)
+                                    .findFirst()
+                                    .ifPresent(meta -> {
+                                        throw new AgentInactiveException(meta.getUuid());
+                                    });
 
-                )
-                .timeout(Duration.ofMillis(10000));
+                    return Flux.fromIterable(plan.getBlocks())
+                            .flatMap(block -> blockExecutor.executeBlockReactive(
+                                    block, metadataMap, new ConcurrentHashMap<>()
+                            ))
+                            .collectMap(TaskResult::getTaskId, Function.identity());
+                })
+                .timeout(Duration.ofSeconds(10));
+        });
     }
 
     private Mono<Map<String, TaskResult>> fallbackExecutePlanReactive(
-            ExecutionPlan plan,
-            Throwable ex
-    ) {
-        Map<String, TaskResult> fallback = new HashMap<>();
-        for (TaskBlock block : plan.getBlocks()) {
-            for (AgentTask task : block.getTasks()) {
-                fallback.put(
-                        task.getId(),
-                        TaskResult.of(
-                                task.getId(),
-                                null,
-                                Map.of(
-                                        "fallback", "Execution failed",
-                                        "reason", ex.getClass().getSimpleName() + ": " + ex.getMessage()
-                                )
-                        )
-                );
-            }
-        }
-        return Mono.just(fallback);
+            Mono<ExecutionPlan> planMono, Throwable ex) {
+        return planMono.flatMap(plan -> {
+            Map<String, TaskResult> fallback = plan.getBlocks().stream()
+                    .flatMap(block -> block.getTasks().stream())
+                    .collect(Collectors.toMap(
+                            AgentTask::getId,
+                            task -> TaskResult.of(
+                                    task.getId(), null,
+                                    Map.of("fallback", "execution_error", "reason", ex.getMessage())
+                            )
+                    ));
+            return Mono.just(fallback);
+        });
     }
 }

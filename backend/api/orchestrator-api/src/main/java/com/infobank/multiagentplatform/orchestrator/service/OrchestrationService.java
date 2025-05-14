@@ -1,7 +1,7 @@
 package com.infobank.multiagentplatform.orchestrator.service;
 
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentSummaryResponse;
-import com.infobank.multiagentplatform.orchestrator.model.plan.ExecutionPlan;
+import com.infobank.multiagentplatform.orchestrator.exception.AgentInactiveException;
 import com.infobank.multiagentplatform.orchestrator.model.result.TaskResult;
 import com.infobank.multiagentplatform.orchestrator.service.executor.ExecutionPlanExecutor;
 import com.infobank.multiagentplatform.orchestrator.service.planner.TaskPlanner;
@@ -12,18 +12,12 @@ import com.infobank.multiagentplatform.orchestrator.service.response.Orchestrati
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
-/**
- * 전체 Orchestration 흐름을 담당하는 서비스
- * 1) 에이전트 목록 조회
- * 2) 실행 계획 생성
- * 3) 계획 실행
- * 4) 결과 후처리
- * 5) 응답 DTO 생성
- */
 @Service
 @RequiredArgsConstructor
 public class OrchestrationService {
@@ -34,16 +28,23 @@ public class OrchestrationService {
     private final ResultPostProcessor postProcessor;
 
     public Mono<OrchestrationResponse> orchestrate(OrchestrationServiceRequest request) {
+        Mono<List<AgentSummaryResponse>> agents = brokerClient.getAgentSummaries()
+                .flatMap(list -> list.isEmpty()
+                        ? Mono.error(new AgentInactiveException("활성화된 에이전트가 없습니다."))
+                        : Mono.just(list)
+                );
 
-        // 1. 사용 가능한 에이전트 요약 DTO 조회
-        List<AgentSummaryResponse> agents = brokerClient.getAgentSummaries();
+        Mono<Map<String, TaskResult>> rawResult = planner.plan(request, agents)
+                .flatMap(plan -> executor.executePlanReactive(Mono.just(plan)))
+                .retryWhen(Retry.fixedDelay(2, Duration.ofSeconds(2))
+                        .filter(ex -> ex instanceof AgentInactiveException)
+                );
 
-        // 2. 실행 계획 생성 (planner.plan 시, AgentSummaryResponse 리스트를 받도록 시그니처 변경 필요)
-        ExecutionPlan plan = planner.plan(request, agents);
-
-        // 3. 실행 계획 수행
-        Mono<Map<String, TaskResult>> rawResult = executor.executePlanReactive(plan);
-
-        return postProcessor.process(rawResult);
+        return postProcessor.process(rawResult)
+                .onErrorResume(AgentInactiveException.class, ex ->
+                        Mono.error(new IllegalStateException(
+                                "에이전트 상태 불일치로 작업을 재시도했습니다. " + ex.getMessage(), ex
+                        ))
+                );
     }
 }

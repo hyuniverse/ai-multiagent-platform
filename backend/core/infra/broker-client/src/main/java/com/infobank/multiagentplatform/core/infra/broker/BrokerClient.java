@@ -3,6 +3,7 @@ package com.infobank.multiagentplatform.core.infra.broker;
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentDetailResponse;
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentSummaryResponse;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -11,9 +12,6 @@ import java.util.List;
  * core/infra 계층에 위치하여 상위(api/orchestrator) 모듈에서 참조만 함
  */
 public interface BrokerClient {
-    /** 단일 에이전트 메타데이터 조회 */
-    AgentDetailResponse getAgentMetadata(String agentId);
-    /** 배치 조회(여러 ID) */
-    List<AgentDetailResponse> getAgentMetadataBatch(List<String> agentIds);
-    List<AgentSummaryResponse> getAgentSummaries();
+    Mono<List<AgentDetailResponse>> getAgentMetadataBatch(List<String> agentIds);
+    Mono<List<AgentSummaryResponse>> getAgentSummaries();
 }

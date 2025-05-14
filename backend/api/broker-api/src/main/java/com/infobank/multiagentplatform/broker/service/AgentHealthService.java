@@ -6,27 +6,34 @@ import com.infobank.multiagentplatform.domain.agent.repository.AgentRepository;
 import com.infobank.multiagentplatform.domain.agent.repository.AgentSnapshotRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @RequiredArgsConstructor
 @Service
-@Transactional
 public class AgentHealthService {
 
     private final AgentRepository agentRepository;
     private final AgentSnapshotRepository snapshotRepository;
     private final AgentHealthChecker agentHealthChecker;
 
-    public void updateAllSnapshots() {
-        List<AgentEntity> agents = agentRepository.findAll();
-        for (AgentEntity agent : agents) {
-            boolean reachable = agentHealthChecker.isReachable(agent.getProtocol(), agent.getEndpoint());
-            AgentSnapshotEntity snapshot = snapshotRepository.findById(agent.getUuid())
-                    .orElseThrow(() -> new IllegalStateException("AgentSnapshot not found for uuid: " + agent.getUuid()));
-            snapshot.updateReachable(reachable);
-            snapshotRepository.save(snapshot);
-        }
+    /**
+     * JPA(블로킹) 호출을 Reactor로 감싸서 boundedElastic 스레드 풀에서 실행합니다.
+     */
+    public Mono<Void> updateAllSnapshots() {
+        return Flux.fromIterable(agentRepository.findAll())
+                .flatMap(agent ->
+                                Mono.fromCallable(() ->
+                                                agentHealthChecker.isReachable(agent.getProtocol(), agent.getEndpoint()))
+                                        .subscribeOn(Schedulers.boundedElastic())
+                                        .flatMap(reachable -> Mono.fromRunnable(() -> {
+                                            AgentSnapshotEntity snapshot = snapshotRepository.findById(agent.getUuid())
+                                                    .orElseThrow(() -> new IllegalStateException("Snapshot missing: " + agent.getUuid()));
+                                            snapshot.updateReachable(reachable);
+                                            snapshotRepository.save(snapshot);
+                                        }).subscribeOn(Schedulers.boundedElastic()))
+                        , /*동시성*/ 10)
+                .then();
     }
 }

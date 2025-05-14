@@ -3,27 +3,22 @@ package com.infobank.multiagentplatform.orchestrator.llm;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentSummaryResponse;
 import com.infobank.multiagentplatform.orchestrator.config.LLMClientProperties;
+import com.infobank.multiagentplatform.orchestrator.exception.PlanParsingException;
 import com.infobank.multiagentplatform.orchestrator.model.plan.ExecutionPlan;
-import com.infobank.multiagentplatform.orchestrator.controller.request.OrchestrationRequest;
 import com.infobank.multiagentplatform.orchestrator.service.planner.PlanJsonParser;
 import com.infobank.multiagentplatform.orchestrator.service.planner.PromptBuilder;
 import com.infobank.multiagentplatform.orchestrator.service.request.OrchestrationServiceRequest;
-import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.core5.util.Timeout;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * OpenAI API 호출 및 ExecutionPlan 수립 구현체
@@ -32,73 +27,89 @@ import java.util.Map;
 @Qualifier("openAIClient")
 public class OpenAIClient implements LLMClient {
 
-    private final RestTemplate restTemplate;
-    private final String apiUrl;
+    private final WebClient webClient;
     private final String model;
     private final PromptBuilder promptBuilder;
     private final PlanJsonParser planJsonParser;
 
-    public OpenAIClient(RestTemplateBuilder builder,
+    public OpenAIClient(WebClient.Builder webClientBuilder,
                         LLMClientProperties props,
                         PromptBuilder promptBuilder,
                         PlanJsonParser planJsonParser) {
 
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(Timeout.ofSeconds(5))
-                .setResponseTimeout(Timeout.ofSeconds(60))
-                .build();
-        CloseableHttpClient httpClient = HttpClients.custom()
-                .setDefaultRequestConfig(requestConfig)
-                .build();
-
-        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
-        factory.setHttpClient(httpClient);
-
-        this.restTemplate = builder
-                .requestFactory(() -> factory)
+        this.webClient = webClientBuilder
+                .baseUrl(props.getApiUrl())
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + props.getApiKey())
                 .build();
 
-        this.apiUrl = props.getApiUrl();
-        this.model = props.getModel();
-        this.promptBuilder = promptBuilder;
-        this.planJsonParser = planJsonParser;
+        this.model           = props.getModel();
+        this.promptBuilder   = promptBuilder;
+        this.planJsonParser  = planJsonParser;
+    }
+
+
+    @Override
+    @Retry(name = "openAIClientRetry")
+    @CircuitBreaker(name = "openAIClientCB", fallbackMethod = "planFallback")
+    // Plan 생성
+    public Mono<ExecutionPlan> plan(OrchestrationServiceRequest request, Mono<List<AgentSummaryResponse>> agentSummaries) {
+        Mono<String> prompt = promptBuilder.buildPrompt(request, agentSummaries);
+        return callOpenAI(prompt)
+                .flatMap(response -> {
+                    try {
+                        return Mono.just(planJsonParser.parse(response));
+                    } catch (PlanParsingException e) {
+                        return Mono.error(e); // 명시적으로 예외로 감싸기
+                    }
+                });
+    }
+
+    private Mono<ExecutionPlan> planFallback(OrchestrationServiceRequest request,
+                                             Mono<List<AgentSummaryResponse>> agentSummaries,
+                                             Throwable ex) {
+        return Mono.error(new IllegalStateException("실행 계획 수립 실패: " + ex.getMessage(), ex));
     }
 
     @Override
-    public ExecutionPlan plan(OrchestrationServiceRequest request, List<AgentSummaryResponse> agentSummaries) {
-        String prompt = promptBuilder.buildPrompt(request, agentSummaries);
-        String content = callOpenAI(prompt);
-        return planJsonParser.parse(content);
-    }
-
-    @Override
-    public String generateText(String prompt) {
+    @Retry(name = "openAIClientRetry")
+    @CircuitBreaker(name = "openAIClientCB", fallbackMethod = "textFallback")
+    // ping 테스트 용
+    public Mono<String> generateText(Mono<String> prompt) {
         return callOpenAI(prompt);
+    }
+
+    private Mono<String> textFallback(Mono<String> prompt, Throwable ex) {
+        return Mono.just("죄송합니다. 현재 텍스트 생성이 불가합니다.");
     }
 
     /**
      * OpenAI에 프롬프트를 보내고 응답 텍스트 추출
      */
-    private String callOpenAI(String prompt) {
-        Map<String, Object> message = Map.of(
-                "role", "user",
-                "content", prompt
-        );
-        Map<String, Object> body = Map.of(
-                "model", model,
-                "messages", List.of(message)
-        );
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body);
-        ResponseEntity<JsonNode> response = restTemplate.postForEntity(apiUrl, request, JsonNode.class);
-        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-            throw new IllegalStateException("OpenAI API call failed: " + response.getStatusCode());
-        }
-        JsonNode choices = response.getBody().get("choices");
-        if (choices == null || !choices.isArray() || choices.isEmpty()) {
-            throw new IllegalStateException("No choices in OpenAI response");
-        }
-        return choices.get(0).get("message").get("content").asText();
+    private Mono<String> callOpenAI(Mono<String> promptMono) {
+        return promptMono.flatMap(prompt -> {
+            Map<String, Object> body = Map.of(
+                    "model", model,
+                    "messages", List.of(Map.of("role", "user", "content", prompt))
+            );
+
+            return webClient.post()
+                    .bodyValue(body)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError,
+                            c -> c.createException().flatMap(Mono::error))
+                    .bodyToMono(JsonNode.class)
+                    .handle((resp, sink) -> {
+                        JsonNode choices = Optional.ofNullable(resp)
+                                .map(r -> r.path("choices"))
+                                .orElseThrow(() -> new IllegalStateException("OpenAI 응답이 null입니다."));
+                        if (!choices.isArray() || choices.isEmpty()) {
+                            sink.error(new IllegalStateException("No choices in OpenAI response"));
+                            return;
+                        }
+                        sink.next(choices.get(0).path("message").path("content").asText());
+                    });
+        });
     }
+
 }

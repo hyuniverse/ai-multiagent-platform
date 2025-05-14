@@ -5,7 +5,7 @@ spring:
     name: multiagent-platform
 
   datasource:
-    url: jdbc:h2:mem:testdb
+    url: jdbc:h2:file:./data/agentdb;DB_CLOSE_DELAY=-1;AUTO_SERVER=true
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -27,12 +27,25 @@ server:
 
 broker:
   service:
-    url: http://localhost:8080
+    url: http://localhost:8080/api/v1/agents
 
 orchestrator:
   http:
-    connect-timeout: 1000   # ms
-    read-timeout: 2000      # ms
+    connect-timeout: 1000ms   # 1초 연결 타임아웃
+    read-timeout:    30000ms   # 2초 응답 대기 타임아웃
+
+llm:
+  client:
+    api-key: ${OPENAI_API_KEY}
+    api-url: https://api.openai.com/v1/chat/completions
+    model: gpt-4
+    connect-timeout: 10s
+    read-timeout:    15s
+
+agent:
+  client:
+    connect-timeout: 1s
+    read-timeout: 5s
 
 springdoc:
   api-docs:
@@ -40,25 +53,61 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-resilience:
+resilience4j:
   retry:
-    maxAttempts: 5
-    initialInterval: 1000   # ms
-    multiplier: 2.0
-  circuitbreaker:
-    failureRateThreshold: 60.0
-    waitDurationInOpenState: 60000      # ms
-    slidingWindowSize: 50
-    permittedNumberOfCallsInHalfOpenState: 5
+    instances:
+      executorRetry:
+        maxAttempts: 3
+        waitDuration: 1s
+      openAIClientRetry:
+        maxAttempts: 3
+        waitDuration: 2s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2.0
+        retryExceptions:
+          - com.infobank.multiagentplatform.orchestrator.exception.PlanParsingException
+      brokerRetry:
+        maxAttempts: 3
+        waitDuration: 2s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2.0
 
-# Actuator 설정: 빈 목록 확인용
+  circuitbreaker:
+    instances:
+      executorCircuit:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+      openAIClientCB:
+        slidingWindowSize: 60
+        slidingWindowType: TIME_BASED
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+      brokerCB:
+        slidingWindowSize: 5
+        slidingWindowType: COUNT_BASED
+        failureRateThreshold: 100
+        waitDurationInOpenState: 60s
+
+    bulkhead:
+      instances:
+        agent-bh:
+          max-concurrent-calls: 20
+          max-wait-duration: 500ms
+
+
 management:
   endpoints:
     web:
       exposure:
         include: beans, health, info, prometheus, httptrace
 
-# 로깅 레벨 조정: 빈 생성 로그 확인
 logging:
   level:
-    org.springframework.beans.factory.support: DEBUG
+    root: INFO
+    com.infobank.multiagentplatform.config: DEBUG
+    io.github.resilience4j.retry: DEBUG
+
+  file:
+    path: logs
+    name: app.log

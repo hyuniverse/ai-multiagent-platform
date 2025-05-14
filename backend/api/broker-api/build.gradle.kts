@@ -44,6 +44,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.17.0")
 
     implementation("io.github.resilience4j:resilience4j-spring-boot3")
+    implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j:3.2.1")
 
     // 테스트
     testImplementation(platform("org.junit:junit-bom:5.10.0"))

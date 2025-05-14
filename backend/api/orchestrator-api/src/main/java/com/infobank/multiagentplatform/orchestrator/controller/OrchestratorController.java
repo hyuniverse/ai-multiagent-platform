@@ -17,7 +17,7 @@ import reactor.core.publisher.Mono;
  * Orchestrator 엔드포인트 컨트롤러
  */
 @RestController
-@RequestMapping("/api/orchestrator")
+@RequestMapping("/api/v1/orchestrator")
 @Validated
 @RequiredArgsConstructor
 public class OrchestratorController {

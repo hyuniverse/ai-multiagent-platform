@@ -1,6 +1,5 @@
 plugins {
     id("java")
-    id("org.springframework.boot") version "3.4.4"
     id("io.spring.dependency-management") version "1.1.7"
 }
 
@@ -13,6 +12,11 @@ repositories {
 
 dependencies {
     implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.4.4"))
+
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+
+    // JPA Auditing용 어노테이션 지원
+    implementation("org.springframework.data:spring-data-commons")
 
     // Lombok
     compileOnly("org.projectlombok:lombok:1.18.30")

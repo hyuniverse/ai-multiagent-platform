@@ -24,5 +24,5 @@ public class ExecutionPlan {
     private List<TaskBlock> blocks;
 
     @JsonProperty("unassigned")
-    private List<AgentTask> unassigned;
+    private List<String> unassigned;
 }

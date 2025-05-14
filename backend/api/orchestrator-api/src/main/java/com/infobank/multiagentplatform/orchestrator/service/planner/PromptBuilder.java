@@ -9,6 +9,7 @@ import com.infobank.multiagentplatform.orchestrator.service.request.Orchestratio
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.util.List;
@@ -31,26 +32,30 @@ public class PromptBuilder {
     /**
      * 사용자 요청과 에이전트 요약 DTO를 조합하여 프롬프트 JSON 문자열 생성
      */
-    public String buildPrompt(OrchestrationServiceRequest req, List<AgentSummaryResponse> agents) {
-        // 원본 템플릿 복제
-        ObjectNode root = templateRoot.deepCopy();
-        root.put("user_input", req.getRawText());
+    public Mono<String> buildPrompt(OrchestrationServiceRequest req, Mono<List<AgentSummaryResponse>> agentsMono) {
+        return agentsMono.handle((agents, sink) -> {
+            // 템플릿 복제 및 사용자 입력 삽입
+            ObjectNode root = templateRoot.deepCopy();
+            root.put("user_input", req.getRawText());
 
-        ArrayNode arr = objectMapper.createArrayNode();
-        for (AgentSummaryResponse a : agents) {
-            ObjectNode node = objectMapper.createObjectNode();
-            node.put("agentId", a.getUuid());
-            node.put("description", a.getDescription());
-            node.putPOJO("inputTypes", a.getInputTypes());
-            node.putPOJO("outputTypes", a.getOutputTypes());
-            arr.add(node);
-        }
-        root.set("agent_list", arr);
+            // agent_list 구성
+            ArrayNode arr = objectMapper.createArrayNode();
+            for (AgentSummaryResponse a : agents) {
+                ObjectNode node = objectMapper.createObjectNode();
+                node.put("agentId", a.getUuid());
+                node.put("description", a.getDescription());
+                node.putPOJO("inputTypes", a.getInputTypes());
+                node.putPOJO("outputTypes", a.getOutputTypes());
+                arr.add(node);
+            }
+            root.set("agent_list", arr);
 
-        try {
-            return objectMapper.writeValueAsString(root);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("프롬프트 JSON 생성 실패", e);
-        }
+            // 문자열로 직렬화
+            try {
+                sink.next(objectMapper.writeValueAsString(root));
+            } catch (JsonProcessingException e) {
+                sink.error(new IllegalStateException("프롬프트 JSON 생성 실패", e));
+            }
+        });
     }
 }

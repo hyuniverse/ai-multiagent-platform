@@ -7,6 +7,7 @@ import com.infobank.multiagentplatform.orchestrator.llm.LLMClient;
 import com.infobank.multiagentplatform.orchestrator.service.request.OrchestrationServiceRequest;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ public class TaskPlanner {
      * @param agents  사용 가능한 에이전트 요약 DTO 목록
      * @return 실행 계획
      */
-    public ExecutionPlan plan(OrchestrationServiceRequest request, List<AgentSummaryResponse> agents) {
+    public Mono<ExecutionPlan> plan(OrchestrationServiceRequest request, Mono<List<AgentSummaryResponse>> agents) {
         return llmClient.plan(request, agents);
     }
 }

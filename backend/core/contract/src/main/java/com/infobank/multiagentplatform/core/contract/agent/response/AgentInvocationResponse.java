@@ -1,6 +1,8 @@
 package com.infobank.multiagentplatform.core.contract.agent.response;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -21,5 +23,11 @@ public class AgentInvocationResponse {
 
     public static AgentInvocationResponse of(String raw, JsonNode parsed) {
         return new AgentInvocationResponse(raw, parsed);
+    }
+
+    public static AgentInvocationResponse failure(String rawResponse, String reason) {
+        ObjectNode node = new ObjectMapper().createObjectNode();
+        node.put("fallbackReason", reason);
+        return new AgentInvocationResponse(rawResponse, node);
     }
 }
