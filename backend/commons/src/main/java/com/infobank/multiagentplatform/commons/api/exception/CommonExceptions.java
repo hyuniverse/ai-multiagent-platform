@@ -5,7 +5,6 @@ package com.infobank.multiagentplatform.commons.api.exception;
  */
 public class CommonExceptions {
     private CommonExceptions() {
-        // 유틸 클래스이므로 인스턴스화 금지
     }
 
     /**
@@ -25,6 +24,4 @@ public class CommonExceptions {
             super(message);
         }
     }
-
-    // 필요에 따라 추가 예외 정의
 }

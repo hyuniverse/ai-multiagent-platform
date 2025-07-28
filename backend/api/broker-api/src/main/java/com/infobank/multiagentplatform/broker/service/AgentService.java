@@ -76,7 +76,6 @@ public class AgentService {
         if (!repository.existsById(uuid)) {
             throw new EntityNotFoundException("에이전트를 찾을 수 없습니다: " + uuid);
         }
-        // 스냅샷 먼저 삭제
         snapshotRepository.deleteById(uuid);
         repository.deleteById(uuid);
         postProcessor.afterDelete(uuid);

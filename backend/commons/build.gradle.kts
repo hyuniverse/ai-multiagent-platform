@@ -15,14 +15,12 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
-    // JPA Auditing용 어노테이션 지원
     implementation("org.springframework.data:spring-data-commons")
 
     // Lombok
     compileOnly("org.projectlombok:lombok:1.18.30")
     annotationProcessor("org.projectlombok:lombok:1.18.30")
 
-    // REST 예외 핸들러(@RestControllerAdvice), ResponseEntity, @Valid 등을 사용
     implementation("org.springframework.boot:spring-boot-starter-web")
     // javax/hibernate validator (@Valid, @NotNull 등)
     implementation("org.springframework.boot:spring-boot-starter-validation")

@@ -37,7 +37,6 @@ public class WebClientConfig {
 
         ReactorClientHttpConnector connector = new ReactorClientHttpConnector(httpClient);
 
-        // MDC 필터 정의 (import org.springframework.web.reactive.function.client.ExchangeFilterFunction;)
         ExchangeFilterFunction mdcFilter = ExchangeFilterFunction.ofRequestProcessor(req -> {
             String traceId = MDC.get("traceId");
             ClientRequest filtered = ClientRequest.from(req)
@@ -46,7 +45,6 @@ public class WebClientConfig {
             return Mono.just(filtered);
         });
 
-        // WebClient.builder() 로 새 Builder를 만들고, 공통 설정만 적용해 빈으로 등록
         return WebClient.builder()
                 .clientConnector(connector)
                 .filter(mdcFilter);

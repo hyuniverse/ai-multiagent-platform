@@ -31,7 +31,6 @@ public class LlmNarrativePostProcessor implements ResultPostProcessor {
                     사용자의 질의에 대한 답변 글을 하나의 완결된 설명문으로 재구성해 주세요:
 
                     """ + payload;
-                    // llm.generateText가 블로킹 메서드라면 fromSupplier로 감싸기
                     return llm.generateText(Mono.just(prompt))
                             .map(OrchestrationResponse::of);
                 });

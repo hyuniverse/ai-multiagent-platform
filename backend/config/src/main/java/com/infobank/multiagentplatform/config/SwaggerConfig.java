@@ -1,5 +1,3 @@
-// src/main/java/com/infobank/multiagentplatform/config/SwaggerConfig.java
-
 package com.infobank.multiagentplatform.config;
 
 import io.swagger.v3.oas.models.OpenAPI;

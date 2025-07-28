@@ -24,7 +24,7 @@ public class RestAgentHealthInvoker implements AgentHealthInvoker {
                     .uri(endpoint + "/ping")
                     .retrieve()
                     .toBodilessEntity()
-                    .block();   // 동기 호출
+                    .block();
             return true;
         } catch (Exception e) {
             log.warn("Health check failed for {}: {}", endpoint, e.toString());

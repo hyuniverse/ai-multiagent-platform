@@ -1,4 +1,3 @@
-// AgentBatchRequest.java
 package com.infobank.multiagentplatform.core.contract.agent.request;
 
 import jakarta.validation.constraints.NotEmpty;

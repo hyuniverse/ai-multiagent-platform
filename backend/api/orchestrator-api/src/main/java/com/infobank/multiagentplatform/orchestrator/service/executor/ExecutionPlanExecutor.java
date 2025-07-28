@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ExecutionPlanExecutor {
 
-    private final BrokerClient brokerClient;        // 이제 Mono<List<AgentDetailResponse>> 반환
-    private final TaskBlockExecutor blockExecutor; // Flux<TaskResult> 반환
+    private final BrokerClient brokerClient;
+    private final TaskBlockExecutor blockExecutor;
 
     @CircuitBreaker(name = "executorCircuit", fallbackMethod = "fallbackExecutePlanReactive")
     @Retry(name = "executorRetry")

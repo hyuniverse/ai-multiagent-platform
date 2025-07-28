@@ -24,7 +24,6 @@ public class RestAgentInvoker implements AgentInvoker {
 
     public RestAgentInvoker(WebClient.Builder webClientBuilder,
                             ObjectMapper objectMapper) {
-        // 공통 커넥터·타임아웃·MDC 필터가 적용된 builder
         this.webClient = webClientBuilder.build();
         this.objectMapper = objectMapper;
     }
@@ -40,7 +39,6 @@ public class RestAgentInvoker implements AgentInvoker {
                 .onStatus(status -> status.isError(),
                         resp -> resp.createException().flatMap(Mono::error))
                 .bodyToMono(String.class)
-                // 필요하다면 개별 호출 타임아웃 유지
                 .timeout(Duration.ofMillis(30000))
                 .flatMap(raw ->
                         Mono.fromCallable(() -> objectMapper.readTree(raw))
@@ -48,9 +46,7 @@ public class RestAgentInvoker implements AgentInvoker {
                 );
     }
 
-    // fallbackMethod 시그니처: 원본 파라미터 + Throwable, Mono 리턴
     private Mono<AgentInvocationResponse> fallbackInvoke(AgentInvocationRequest request, Throwable ex) {
-        // 여기에 대체 응답 로직을 작성
         return Mono.just(
                 AgentInvocationResponse.failure("fallback", ex.getClass().getSimpleName())
         );

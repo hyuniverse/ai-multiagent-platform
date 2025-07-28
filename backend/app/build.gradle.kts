@@ -22,8 +22,6 @@ dependencies {
 
     implementation(platform("io.github.resilience4j:resilience4j-bom:2.0.2"))
 
-
-    // Lombok
     compileOnly("org.projectlombok:lombok:1.18.30")
     annotationProcessor("org.projectlombok:lombok:1.18.30")
     implementation("com.h2database:h2")
@@ -33,7 +31,6 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
 
-    // 설정 프로퍼티 메타데이터 생성기
     compileOnly("org.springframework.boot:spring-boot-configuration-processor:3.4.4")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:3.4.4")
 

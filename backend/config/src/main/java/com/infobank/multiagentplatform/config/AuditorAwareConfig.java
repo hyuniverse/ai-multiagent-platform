@@ -11,6 +11,6 @@ public class AuditorAwareConfig {
 
     @Bean
     public AuditorAware<Long> auditorProvider() {
-        return () -> Optional.of(1L); // 실제로는 SecurityContext 등에서 가져옴
+        return () -> Optional.of(1L);
     }
 }

@@ -34,8 +34,7 @@ public class AgentController {
     @Operation(summary = "에이전트 등록", description = "에이전트를 등록합니다. ID가 중복되면 409 에러를 반환합니다.")
     @Timed(value = "agent.register", description = "Time to register agent")
     public ApiResponse<AgentRegisterResponse> registerAgent(@Valid @RequestBody AgentRegisterRequest request) {
-        // traceId 저장
-        String traceId = MDC.get("traceId"); // Spring Boot 3.4.x + micrometer-tracing 기준
+        String traceId = MDC.get("traceId");
         MDC.put("traceId", traceId);
         AgentRegisterResponse response = agentService.registerAgent(request.toServiceRequest());
 

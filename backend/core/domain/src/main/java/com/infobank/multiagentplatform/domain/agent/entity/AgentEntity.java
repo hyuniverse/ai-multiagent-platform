@@ -17,7 +17,7 @@ import java.util.List;
 public class AgentEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID) // ✅ 여기에 붙입니다.
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(length = 36)
     private String uuid;
 

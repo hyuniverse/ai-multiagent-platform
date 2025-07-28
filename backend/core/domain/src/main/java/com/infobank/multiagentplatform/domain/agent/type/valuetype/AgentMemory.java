@@ -16,18 +16,6 @@ public class AgentMemory {
 
     private final String memoryType;
 
-//    public boolean isEnabled() {
-//        return boolean.TRUE.equals(hasMemory);
-//    }
-//
-//    public static AgentMemory disabled() {
-//        return new AgentMemory(false, null);
-//    }
-//
-//    public static AgentMemory of(String memoryType) {
-//        return new AgentMemory(true, memoryType);
-//    }
-
     public static AgentMemory of(Boolean hasMemory, String memoryType) {
         if (hasMemory && memoryType != null && !memoryType.isBlank()) {
             return new AgentMemory(true, memoryType);

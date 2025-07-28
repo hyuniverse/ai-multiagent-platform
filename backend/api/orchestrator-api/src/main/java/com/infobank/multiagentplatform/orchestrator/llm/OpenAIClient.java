@@ -60,7 +60,7 @@ public class OpenAIClient implements LLMClient {
                     try {
                         return Mono.just(planJsonParser.parse(response));
                     } catch (PlanParsingException e) {
-                        return Mono.error(e); // 명시적으로 예외로 감싸기
+                        return Mono.error(e);
                     }
                 });
     }

@@ -1,5 +1,3 @@
-// src/main/java/com/infobank/multiagentplatform/app/TestController.java
-
 package com.infobank.multiagentplatform.app;
 
 import org.springframework.web.bind.annotation.GetMapping;

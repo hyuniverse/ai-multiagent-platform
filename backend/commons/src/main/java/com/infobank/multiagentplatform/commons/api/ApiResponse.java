@@ -24,7 +24,6 @@ public class ApiResponse<T> {
         this.data = data;
     }
 
-    // Factory 메서드
     public static <T> ApiResponse<T> of(int code, String status, String message, T data) {
         return new ApiResponse<>(code, status, message, data);
     }

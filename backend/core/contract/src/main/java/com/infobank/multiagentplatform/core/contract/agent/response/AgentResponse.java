@@ -1,4 +1,3 @@
-// AgentResponse.java
 package com.infobank.multiagentplatform.core.contract.agent.response;
 
 import com.infobank.multiagentplatform.domain.agent.type.enumtype.ProtocolType;

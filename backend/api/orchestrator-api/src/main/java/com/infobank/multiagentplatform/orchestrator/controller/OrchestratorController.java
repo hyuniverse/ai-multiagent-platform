@@ -34,7 +34,7 @@ public class OrchestratorController {
         logger.info("/ask 요청 수신: {}", request);
 
         return orchestrationService
-                .orchestrate(request.toServiceRequest())   // Mono<OrchestrationResponse>
+                .orchestrate(request.toServiceRequest())
                 .map(ApiResponse::ok);
     }
 }

@@ -23,10 +23,9 @@ public class PlanJsonParser {
     public ExecutionPlan parse(String rawJson) {
         try {
             System.out.println("Generated Plan JSON: " + rawJson);
-            // Remove markdown code block if exists
             if (rawJson.startsWith("```")) {
-                rawJson = rawJson.replaceAll("(?s)```(?:json)?\\s*", "")  // remove opening ```
-                        .replaceAll("\\s*```$", "");            // remove closing ```
+                rawJson = rawJson.replaceAll("(?s)```(?:json)?\\s*", "")
+                        .replaceAll("\\s*```$", "");
             }
             ExecutionPlan plan = objectMapper.readValue(rawJson, ExecutionPlan.class);
             validatePlan(plan);

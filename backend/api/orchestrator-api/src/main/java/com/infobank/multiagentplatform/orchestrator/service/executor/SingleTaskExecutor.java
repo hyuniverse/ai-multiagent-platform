@@ -39,7 +39,7 @@ public class SingleTaskExecutor {
         AgentInvocationRequest request = AgentInvocationRequest.of(meta, payload);
         AgentInvoker invoker = invokerFactory.getInvoker(meta.getProtocol());
 
-        return invoker.invoke(request)                          // Mono<AgentInvocationResponse>
+        return invoker.invoke(request)
                 .map(response ->
                         TaskResult.of(
                                 task.getId(),
