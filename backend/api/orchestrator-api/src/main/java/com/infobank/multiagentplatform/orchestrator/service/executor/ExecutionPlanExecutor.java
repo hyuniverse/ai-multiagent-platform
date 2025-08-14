@@ -9,6 +9,7 @@ import com.infobank.multiagentplatform.orchestrator.model.result.TaskResult;
 import com.infobank.multiagentplatform.core.infra.broker.BrokerClient;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -30,6 +31,7 @@ public class ExecutionPlanExecutor {
 
     @CircuitBreaker(name = "executorCircuit", fallbackMethod = "fallbackExecutePlanReactive")
     @Retry(name = "executorRetry")
+    @Timed(value = "orchestration.executor", description = "Time for plan execution")
     public Mono<Map<String, TaskResult>> executePlanReactive(Mono<ExecutionPlan> planMono) {
         return planMono.flatMap(plan -> {
             List<String> agentIds = plan.getBlocks().stream()

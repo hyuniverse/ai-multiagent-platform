@@ -3,6 +3,7 @@ package com.infobank.multiagentplatform.orchestrator.service.postprocessor;
 import com.infobank.multiagentplatform.orchestrator.llm.LLMClient;
 import com.infobank.multiagentplatform.orchestrator.model.result.TaskResult;
 import com.infobank.multiagentplatform.orchestrator.service.response.OrchestrationResponse;
+import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -16,6 +17,7 @@ public class LlmNarrativePostProcessor implements ResultPostProcessor {
     private final LLMClient llm;
 
     @Override
+    @Timed(value = "orchestration.postprocessor", description = "Time for post-processing results")
     public Mono<OrchestrationResponse> process(Mono<Map<String, TaskResult>> resultsMono) {
         return resultsMono
                 // 1) Map<String,TaskResult>에서 직렬화된 문자열 생성

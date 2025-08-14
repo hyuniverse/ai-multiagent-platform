@@ -9,6 +9,7 @@ import com.infobank.multiagentplatform.orchestrator.service.postprocessor.Result
 import com.infobank.multiagentplatform.core.infra.broker.BrokerClient;
 import com.infobank.multiagentplatform.orchestrator.service.request.OrchestrationServiceRequest;
 import com.infobank.multiagentplatform.orchestrator.service.response.OrchestrationResponse;
+import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -27,6 +28,7 @@ public class OrchestrationService {
     private final ExecutionPlanExecutor executor;
     private final ResultPostProcessor postProcessor;
 
+    @Timed(value = "orchestration.service", description = "Total time for orchestration service")
     public Mono<OrchestrationResponse> orchestrate(OrchestrationServiceRequest request) {
         Mono<List<AgentSummaryResponse>> agents = brokerClient.getAgentSummaries()
                 .flatMap(list -> list.isEmpty()
