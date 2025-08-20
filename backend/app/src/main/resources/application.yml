@@ -43,7 +43,8 @@ orchestrator:
 llm:
   client:
     api-key: ${OPENAI_API_KEY}
-    api-url: https://api.openai.com/v1/chat/completions
+    api-url: http://wiremock:8080/v1/chat/completions
+    # https://api.openai.com/v1/chat/completions
     model: gpt-4
     connect-timeout: 10s
     read-timeout:    15s
