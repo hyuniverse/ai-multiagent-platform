@@ -1,5 +1,6 @@
 package com.infobank.multiagentplatform.orchestrator.service.executor;
 
+import com.infobank.multiagentplatform.commons.metrics.ReactiveMetricOperator;
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentDetailResponse;
 import com.infobank.multiagentplatform.domain.agent.type.enumtype.AgentStatus;
 import com.infobank.multiagentplatform.orchestrator.exception.AgentInactiveException;
@@ -9,7 +10,6 @@ import com.infobank.multiagentplatform.orchestrator.model.result.TaskResult;
 import com.infobank.multiagentplatform.core.infra.broker.BrokerClient;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -28,12 +28,12 @@ public class ExecutionPlanExecutor {
 
     private final BrokerClient brokerClient;
     private final TaskBlockExecutor blockExecutor;
+    private final ReactiveMetricOperator metricOperator;
 
     @CircuitBreaker(name = "executorCircuit", fallbackMethod = "fallbackExecutePlanReactive")
     @Retry(name = "executorRetry")
-    @Timed(value = "orchestration.executor", description = "Time for plan execution")
     public Mono<Map<String, TaskResult>> executePlanReactive(Mono<ExecutionPlan> planMono) {
-        return planMono.flatMap(plan -> {
+        Mono<Map<String, TaskResult>> executionMono = planMono.flatMap(plan -> {
             List<String> agentIds = plan.getBlocks().stream()
                     .flatMap(b -> b.getTasks().stream().map(AgentTask::getAgentId))
                     .distinct()
@@ -59,6 +59,8 @@ public class ExecutionPlanExecutor {
                 })
                 .timeout(Duration.ofSeconds(10));
         });
+
+        return executionMono.transform(metricOperator.measure("orchestration.executor"));
     }
 
     private Mono<Map<String, TaskResult>> fallbackExecutePlanReactive(

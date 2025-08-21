@@ -17,6 +17,10 @@ dependencies {
 
     implementation("org.springframework.data:spring-data-commons")
 
+    implementation("io.micrometer:micrometer-core")
+
+    implementation("io.projectreactor:reactor-core")
+
     // Lombok
     compileOnly("org.projectlombok:lombok:1.18.30")
     annotationProcessor("org.projectlombok:lombok:1.18.30")

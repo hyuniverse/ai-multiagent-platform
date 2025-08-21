@@ -1,11 +1,10 @@
 package com.infobank.multiagentplatform.orchestrator.service.planner;
 
+import com.infobank.multiagentplatform.commons.metrics.ReactiveMetricOperator;
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentSummaryResponse;
 import com.infobank.multiagentplatform.orchestrator.model.plan.ExecutionPlan;
-import com.infobank.multiagentplatform.orchestrator.controller.request.OrchestrationRequest;
 import com.infobank.multiagentplatform.orchestrator.llm.LLMClient;
 import com.infobank.multiagentplatform.orchestrator.service.request.OrchestrationServiceRequest;
-import io.micrometer.core.annotation.Timed;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -19,9 +18,11 @@ import java.util.List;
 public class TaskPlanner {
 
     private final LLMClient llmClient;
+    private final ReactiveMetricOperator metricOperator;
 
-    public TaskPlanner(@Qualifier("openAIClient") LLMClient llmClient) {
+    public TaskPlanner(@Qualifier("openAIClient") LLMClient llmClient, ReactiveMetricOperator metricOperator) {
         this.llmClient = llmClient;
+        this.metricOperator = metricOperator;
     }
 
     /**
@@ -31,8 +32,11 @@ public class TaskPlanner {
      * @param agents  사용 가능한 에이전트 요약 DTO 목록
      * @return 실행 계획
      */
-    @Timed(value = "orchestration.planner", description = "Time for planning")
     public Mono<ExecutionPlan> plan(OrchestrationServiceRequest request, Mono<List<AgentSummaryResponse>> agents) {
-        return llmClient.plan(request, agents);
+        return llmClient.plan(request, agents)
+                .transform(metricOperator.measure("orchestration.planner"))
+                .onErrorResume(e -> {
+                    return Mono.error(new IllegalStateException("Plan generation failed", e));
+                });
     }
 }

@@ -9,8 +9,7 @@ import com.infobank.multiagentplatform.orchestrator.service.postprocessor.Result
 import com.infobank.multiagentplatform.core.infra.broker.BrokerClient;
 import com.infobank.multiagentplatform.orchestrator.service.request.OrchestrationServiceRequest;
 import com.infobank.multiagentplatform.orchestrator.service.response.OrchestrationResponse;
-import io.micrometer.core.annotation.Timed;
-import lombok.RequiredArgsConstructor;
+import com.infobank.multiagentplatform.commons.metrics.ReactiveMetricOperator;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
@@ -20,15 +19,24 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 public class OrchestrationService {
 
     private final BrokerClient brokerClient;
     private final TaskPlanner planner;
     private final ExecutionPlanExecutor executor;
     private final ResultPostProcessor postProcessor;
+    private final ReactiveMetricOperator metricOperator;
 
-    @Timed(value = "orchestration.service", description = "Total time for orchestration service")
+    public OrchestrationService(BrokerClient brokerClient, TaskPlanner planner,
+                                ExecutionPlanExecutor executor, ResultPostProcessor postProcessor,
+                                ReactiveMetricOperator metricOperator) {
+        this.brokerClient = brokerClient;
+        this.planner = planner;
+        this.executor = executor;
+        this.postProcessor = postProcessor;
+        this.metricOperator = metricOperator;
+    }
+
     public Mono<OrchestrationResponse> orchestrate(OrchestrationServiceRequest request) {
         Mono<List<AgentSummaryResponse>> agents = brokerClient.getAgentSummaries()
                 .flatMap(list -> list.isEmpty()
@@ -42,11 +50,14 @@ public class OrchestrationService {
                         .filter(ex -> ex instanceof AgentInactiveException)
                 );
 
-        return postProcessor.process(rawResult)
+        Mono<OrchestrationResponse> finalMono = postProcessor.process(rawResult)
                 .onErrorResume(AgentInactiveException.class, ex ->
                         Mono.error(new IllegalStateException(
                                 "에이전트 상태 불일치로 작업을 재시도했습니다. " + ex.getMessage(), ex
                         ))
                 );
+
+        return finalMono
+                .transform(metricOperator.measure("orchestration.service"));
     }
 }
