@@ -1,7 +1,5 @@
 plugins {
     id("java")
-    id("org.springframework.boot")
-    id("io.spring.dependency-management")
 }
 
 group = "com.infobank.multiagentplatform.broker"
@@ -20,15 +18,18 @@ dependencies {
     implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.4.4"))
     implementation(platform("io.github.resilience4j:resilience4j-bom:2.0.2"))
 
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
 
     implementation("jakarta.validation:jakarta.validation-api:3.0.2")
 
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
+    implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.3.0")
 
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+
+    implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
+    implementation("org.postgresql:r2dbc-postgresql")
+
 
     implementation("io.micrometer:micrometer-core")
     implementation("io.micrometer:micrometer-observation")
@@ -50,9 +51,6 @@ tasks.test {
     useJUnitPlatform()
 }
 
-tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
-    enabled = false
-}
 
 tasks.getByName<Jar>("jar") {
     enabled = true

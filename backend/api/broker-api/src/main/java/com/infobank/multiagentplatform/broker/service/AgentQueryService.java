@@ -10,91 +10,73 @@ import com.infobank.multiagentplatform.domain.agent.model.AgentSnapshot;
 import com.infobank.multiagentplatform.domain.agent.repository.AgentRepository;
 import com.infobank.multiagentplatform.domain.agent.repository.AgentSnapshotRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
-@Transactional
+@Slf4j
 public class AgentQueryService {
     private final AgentRepository repository;
     private final AgentSnapshotRepository snapshotRepository;
     private final AgentMapper mapper;
 
-    public List<AgentDetailResponse> getAllAgentDetails() {
-        List<AgentEntity> agents = repository.findAll();
-        List<AgentSnapshotEntity> snapshots = snapshotRepository.findAll();
+    public Mono<List<AgentDetailResponse>> getAllAgentDetails() {
+        Mono<Map<String, AgentSnapshotEntity>> snapshotMapMono =
+                snapshotRepository.findAll()
+                        .collectMap(AgentSnapshotEntity::getUuid);
 
-        // UUID → SnapshotEntity 매핑
-        Map<String, AgentSnapshotEntity> snapshotMap = snapshots.stream()
-                .collect(Collectors.toMap(AgentSnapshotEntity::getUuid, s -> s));
-
-        return agents.stream()
-                .map(agent -> {
-                    String uuid = agent.getUuid();
-                    AgentMetadata metadata = mapper.toMetadata(agent);
-                    AgentSnapshot snapshot = mapper.toSnapshot(snapshotMap.get(uuid));
-                    return AgentDetailResponse.of(uuid, metadata, snapshot);
-                })
-                .collect(Collectors.toList());
+        return snapshotMapMono.flatMapMany(snapshotMap ->
+                repository.findAll()
+                        .map(agent -> toAgentDetailResponse(agent, snapshotMap.get(agent.getUuid())))
+        ).collectList();
     }
 
-    public AgentDetailResponse getAgentDetails(String uuid) {
-        AgentEntity agentEntity = repository.findById(uuid).orElse(null);
-        AgentSnapshotEntity agentSnapshotEntity = snapshotRepository.findById(uuid).orElse(null);
-        if (agentEntity == null || agentSnapshotEntity == null) {
-            // thorw Exception
+    public Mono<AgentDetailResponse> getAgentDetails(String uuid) {
+        Mono<AgentEntity> agentMono = repository.findById(uuid);
+        Mono<AgentSnapshotEntity> snapshotMono = snapshotRepository.findById(uuid);
+
+        return Mono.zip(agentMono, snapshotMono)
+                .map(tuple -> toAgentDetailResponse(tuple.getT1(), tuple.getT2()))
+                .switchIfEmpty(Mono.error(new RuntimeException("Agent not found with uuid: " + uuid)));
+    }
+
+    public Mono<List<AgentSummaryResponse>> getAvailableAgentSummaries() {
+        return snapshotRepository.findAvailableAgents()
+                .map(agent -> {
+                    AgentMetadata metadata = mapper.toMetadata(agent);
+                    return AgentSummaryResponse.of(agent.getUuid(), metadata);
+                })
+                .collectList();
+    }
+
+    public Mono<List<AgentDetailResponse>> getAgentDetailsBatch(List<String> uuids) {
+        if (uuids == null || uuids.isEmpty()) {
+            return Mono.just(Collections.emptyList());
         }
-        AgentMetadata metadata = mapper.toMetadata(agentEntity);
-        AgentSnapshot snapshot = mapper.toSnapshot(agentSnapshotEntity);
-        return AgentDetailResponse.of(uuid, metadata, snapshot);
+
+        Mono<Map<String, AgentSnapshotEntity>> snapshotMapMono =
+                snapshotRepository.findAllByUuidIn(uuids)
+                        .collectMap(AgentSnapshotEntity::getUuid);
+
+        return snapshotMapMono.flatMapMany(snapshotMap ->
+                repository.findAllByUuidIn(uuids)
+                        .map(agent -> toAgentDetailResponse(agent, snapshotMap.get(agent.getUuid())))
+        ).collectList();
     }
 
-    public List<AgentSummaryResponse> getAvailableAgentSummaries() {
-        // 1) 모든 에이전트 메타데이터 조회
-        List<AgentEntity> agents = repository.findAll();
-
-        // 2) UUID 리스트로 해당 스냅샷만 일괄 조회
-        List<String> uuids = agents.stream()
-                .map(AgentEntity::getUuid)
-                .collect(Collectors.toList());
-        List<AgentSnapshotEntity> snapshots = snapshotRepository.findAllByUuidIn(uuids);
-        Map<String, AgentSnapshotEntity> snapshotMap = snapshots.stream()
-                .collect(Collectors.toMap(AgentSnapshotEntity::getUuid, Function.identity()));
-
-        // 3) reachable한 에이전트만 필터링 후 요약 DTO로 매핑
-        return agents.stream()
-                .filter(agent -> {
-                    AgentSnapshotEntity se = snapshotMap.get(agent.getUuid());
-                    return se.isReachable();
-                })
-                .map(agent -> {
-                    String uuid = agent.getUuid();
-                    AgentMetadata metadata = mapper.toMetadata(agent);
-                    return AgentSummaryResponse.of(uuid, metadata);
-                })
-                .collect(Collectors.toList());
-    }
-
-    public List<AgentDetailResponse> getAgentDetailsBatch(List<String> uuids) {
-        List<AgentEntity> agents = repository.findAllByUuidIn(uuids);
-        List<AgentSnapshotEntity> snapshots = snapshotRepository.findAllByUuidIn(uuids);
-
-        Map<String, AgentSnapshotEntity> snapshotMap = snapshots.stream()
-                .collect(Collectors.toMap(AgentSnapshotEntity::getUuid, Function.identity()));
-
-        return agents.stream()
-                .map(agent -> {
-                    AgentMetadata metadata = mapper.toMetadata(agent);
-                    AgentSnapshotEntity snapshotEntity = snapshotMap.get(agent.getUuid());
-                    AgentSnapshot snapshot = mapper.toSnapshot(snapshotEntity);
-                    return AgentDetailResponse.of(agent.getUuid(), metadata, snapshot);
-                })
-                .toList();
+    private AgentDetailResponse toAgentDetailResponse(AgentEntity agent, AgentSnapshotEntity snapshotEntity) {
+        AgentMetadata metadata = mapper.toMetadata(agent);
+        AgentSnapshot snapshot = (snapshotEntity != null)
+                ? mapper.toSnapshotWithLogging(snapshotEntity)
+                : AgentSnapshot.builder().build();
+        return AgentDetailResponse.of(agent.getUuid(), metadata, snapshot);
     }
 }

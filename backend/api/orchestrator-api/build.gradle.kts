@@ -1,7 +1,5 @@
 plugins {
     id("java")
-    id("org.springframework.boot")
-    id("io.spring.dependency-management")
 }
 
 group = "com.infobank.multiagentplatform.orchestrator"
@@ -25,15 +23,12 @@ dependencies {
     implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.4.4"))
     implementation(platform("io.github.resilience4j:resilience4j-bom:2.0.2"))
 
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
+    implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.3.0")
 
-    // Spring Web
-    implementation("org.springframework.boot:spring-boot-starter-web")
 
     // Validation
     implementation("jakarta.validation:jakarta.validation-api:3.0.2")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
+    implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.3.0")
 
     // Lombok
     compileOnly("org.projectlombok:lombok:1.18.30")
@@ -58,10 +53,6 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-}
-
-tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
-    enabled = false
 }
 
 tasks.getByName<Jar>("jar") {

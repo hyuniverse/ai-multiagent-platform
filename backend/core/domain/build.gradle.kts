@@ -13,7 +13,8 @@ dependencies {
 
     implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.4.4"))
 
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
+    implementation("org.postgresql:r2dbc-postgresql")
 
     implementation("jakarta.validation:jakarta.validation-api:3.0.2")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")

@@ -11,10 +11,11 @@ repositories {
 dependencies {
     implementation(project(":commons"))
     implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.4.4"))
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.3.0")
     implementation("jakarta.annotation:jakarta.annotation-api:2.1.1")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
+    runtimeOnly("org.postgresql:r2dbc-postgresql")
     // Lombok
     compileOnly("org.projectlombok:lombok:1.18.30")
     annotationProcessor("org.projectlombok:lombok:1.18.30")

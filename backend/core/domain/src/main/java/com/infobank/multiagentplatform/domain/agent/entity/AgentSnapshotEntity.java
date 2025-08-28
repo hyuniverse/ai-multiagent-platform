@@ -1,28 +1,28 @@
 package com.infobank.multiagentplatform.domain.agent.entity;
 
 import com.infobank.multiagentplatform.commons.domain.TimeBaseEntity;
-import com.infobank.multiagentplatform.domain.agent.model.AgentSnapshot;
 import com.infobank.multiagentplatform.domain.agent.type.enumtype.AgentStatus;
-import jakarta.persistence.*;
-import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
 
-@Entity
-@Table(name = "agent_snapshots")
+import lombok.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.relational.core.mapping.Table;
+
+@Table(name = "agent_snapshot")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Slf4j
 public class AgentSnapshotEntity extends TimeBaseEntity {
 
     @Id
-    private String uuid; // AgentEntity.uuid와 동일한 ID
+    private String uuid;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private AgentStatus status;
 
-    @Column(nullable = false)
     private boolean reachable;
 
-    @Column(nullable = false)
+    @Column("request_count")
     private int requestCount;
 
     @Builder
@@ -52,4 +52,7 @@ public class AgentSnapshotEntity extends TimeBaseEntity {
         this.status = reachable ? AgentStatus.ACTIVE : AgentStatus.INACTIVE;
     }
 
+    public AgentStatus getStatusAsEnum() {
+        return status;
+    }
 }
