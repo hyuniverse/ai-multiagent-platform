@@ -7,6 +7,7 @@ build/
 **/application-local.yml
 **/node_modules
 **/.env
+.DS_Store
 
 ### STS ###
 .apt_generated
