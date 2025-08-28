@@ -5,24 +5,34 @@ spring:
     name: multiagent-platform
 
   datasource:
-    url: jdbc:h2:file:./data/agentdb;DB_CLOSE_DELAY=-1;AUTO_SERVER=true
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: ${SPRING_JDBC_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
 
-  h2:
-    console:
+  r2dbc:
+    url: ${SPRING_R2DBC_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    pool:
       enabled: true
-      settings:
-        web-allow-others: true 
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+      initial-size: 10      # 초기 연결 수 증가 (5 -> 10)
+      max-size: 50          # 최대 연결 수 증가 (20 -> 50)
+      max-idle-time: 30m
+      max-acquire-time: 5s  # 연결 획득 최대 대기 시간
+      max-create-connection-time: 5s  # 새 연결 생성 최대 시간
+  
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+    url: ${SPRING_JDBC_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    out-of-order: false
+    clean-disabled: true
 
   jackson:
     mapper:
@@ -58,7 +68,7 @@ springdoc:
   api-docs:
     enabled: true
   swagger-ui:
-    path: /swagger-ui.html
+    enabled: true
 
 resilience4j:
   retry:
@@ -82,7 +92,7 @@ resilience4j:
   circuitbreaker:
     instances:
       executorCircuit:
-        slidingWindowSize: 10
+        slidingWindowSize: 20         # 슬라이딩 윈도우 크기 증가 (10 -> 20)
         failureRateThreshold: 50
         waitDurationInOpenState: 5s
       openAIClientCB:
@@ -91,29 +101,42 @@ resilience4j:
         failureRateThreshold: 50
         waitDurationInOpenState: 30s
       brokerCB:
-        slidingWindowSize: 5
+        slidingWindowSize: 10         # 슬라이딩 윈도우 크기 증가 (5 -> 10)
         slidingWindowType: COUNT_BASED
-        failureRateThreshold: 100
-        waitDurationInOpenState: 60s
+        failureRateThreshold: 80      # 실패율 임계값 조정 (100 -> 80)
+        waitDurationInOpenState: 30s  # 대기 시간 단축 (60s -> 30s)
+      agent-cb:                       # RestAgentInvoker용 Circuit Breaker 추가
+        slidingWindowSize: 20
+        slidingWindowType: COUNT_BASED
+        failureRateThreshold: 60
+        waitDurationInOpenState: 10s
 
-    bulkhead:
-      instances:
-        agent-bh:
-          max-concurrent-calls: 20
-          max-wait-duration: 500ms
-
+  bulkhead:
+    instances:
+      agent-bh:
+        max-concurrent-calls: 200     # 동시 호출 수 증가 (100 -> 200)
+        max-wait-duration: 1s         # 대기 시간 증가 (500ms -> 1s)
 
 management:
   endpoints:
     web:
       exposure:
-        include: beans, health, info, prometheus, httptrace
+        include: beans, health, info, prometheus, httptrace, metrics
 
 logging:
   level:
     root: INFO
     com.infobank.multiagentplatform.config: DEBUG
     io.github.resilience4j.retry: DEBUG
+    org.flywaydb: DEBUG
+    org.springframework.boot.autoconfigure.flyway: DEBUG
+    org.springframework.context: DEBUG
+    org.springframework.boot.env: DEBUG
+    org.springframework.core.env: DEBUG
+    org.springframework.r2dbc: DEBUG
+    org.springframework.data.r2dbc: DEBUG
+    io.r2dbc.postgresql.QUERY: DEBUG
+    io.r2dbc.postgresql.PARAM: DEBUG
 
   file:
     path: logs

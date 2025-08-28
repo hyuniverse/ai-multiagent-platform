@@ -8,7 +8,6 @@ build/
 **/node_modules
 **/.env
 
-
 ### STS ###
 .apt_generated
 .classpath
@@ -42,4 +41,5 @@ out/
 
 ### ETC ###
 *.tar
-
+/heapdump/
+**/*.log

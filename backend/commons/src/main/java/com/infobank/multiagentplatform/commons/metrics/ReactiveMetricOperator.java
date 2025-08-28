@@ -32,7 +32,10 @@ public class ReactiveMetricOperator {
     public <T> Function<Mono<T>, Mono<T>> measure(String metricName) {
         // 캐시에서 Timer를 찾거나, 없으면 새로 생성하여 캐시에 저장합니다.
         Timer timer = timerCache.computeIfAbsent(metricName,
-                key -> Timer.builder(key).register(meterRegistry));
+                key -> Timer.builder(key)
+                        .publishPercentileHistogram()
+                        .publishPercentiles(0.5, 0.9, 0.95, 0.99)
+                        .register(meterRegistry));
 
         return mono -> {
             final AtomicReference<Timer.Sample> sample = new AtomicReference<>();

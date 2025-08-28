@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "success": true,
+      "message": "Mock agent response",
+      "data": {
+        "result": "Hello from mock agent"
+      }
+    }
+  }
+}
