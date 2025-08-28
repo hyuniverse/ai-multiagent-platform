@@ -10,6 +10,7 @@ import com.infobank.multiagentplatform.core.infra.broker.BrokerClient;
 import com.infobank.multiagentplatform.orchestrator.service.request.OrchestrationServiceRequest;
 import com.infobank.multiagentplatform.orchestrator.service.response.OrchestrationResponse;
 import com.infobank.multiagentplatform.commons.metrics.ReactiveMetricOperator;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class OrchestrationService {
 
     private final BrokerClient brokerClient;
@@ -45,19 +47,25 @@ public class OrchestrationService {
                 );
 
         Mono<Map<String, TaskResult>> rawResult = planner.plan(request, agents)
-                .flatMap(plan -> executor.executePlanReactive(Mono.just(plan)))
+                .flatMap(plan -> {
+                    return executor.executePlanReactive(Mono.just(plan));
+                })
                 .retryWhen(Retry.fixedDelay(2, Duration.ofSeconds(2))
                         .filter(ex -> ex instanceof AgentInactiveException)
+                        .doBeforeRetry(retrySignal -> log.warn("에이전트 비활성화로 인한 재시도: {} 회차", retrySignal.totalRetries() + 1))
                 );
 
         Mono<OrchestrationResponse> finalMono = postProcessor.process(rawResult)
-                .onErrorResume(AgentInactiveException.class, ex ->
-                        Mono.error(new IllegalStateException(
-                                "에이전트 상태 불일치로 작업을 재시도했습니다. " + ex.getMessage(), ex
-                        ))
-                );
+                .transform(metricOperator.measure("orchestration.postprocess"))
+                .onErrorResume(AgentInactiveException.class, ex -> {
+                    log.error("에이전트 상태 불일치 발생: {}", ex.getMessage());
+                    return Mono.error(new IllegalStateException(
+                            "에이전트 상태 불일치로 작업을 재시도했습니다. " + ex.getMessage(), ex
+                    ));
+                });
 
         return finalMono
-                .transform(metricOperator.measure("orchestration.service"));
+                .transform(metricOperator.measure("orchestration.service"))
+                .doOnError(error -> log.error("=== 오케스트레이션 실패 ===: {}", error.getMessage(), error));
     }
 }

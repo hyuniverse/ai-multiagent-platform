@@ -11,6 +11,7 @@ import com.infobank.multiagentplatform.core.infra.broker.BrokerClient;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ExecutionPlanExecutor {
 
     private final BrokerClient brokerClient;
@@ -33,34 +35,39 @@ public class ExecutionPlanExecutor {
     @CircuitBreaker(name = "executorCircuit", fallbackMethod = "fallbackExecutePlanReactive")
     @Retry(name = "executorRetry")
     public Mono<Map<String, TaskResult>> executePlanReactive(Mono<ExecutionPlan> planMono) {
+
         Mono<Map<String, TaskResult>> executionMono = planMono.flatMap(plan -> {
             List<String> agentIds = plan.getBlocks().stream()
                     .flatMap(b -> b.getTasks().stream().map(AgentTask::getAgentId))
                     .distinct()
                     .collect(Collectors.toList());
 
-            // 2) metadataMap 조회
             return brokerClient.getAgentMetadataBatch(agentIds)
                     .flatMapMany(Flux::fromIterable)
                     .collectMap(AgentDetailResponse::getUuid, Function.identity())
                     .flatMap(metadataMap -> {
-                            metadataMap.values().stream()
-                                    .filter(meta -> meta.getStatus() != AgentStatus.ACTIVE)
-                                    .findFirst()
-                                    .ifPresent(meta -> {
-                                        throw new AgentInactiveException(meta.getUuid());
-                                    });
+                        var inactiveAgent = metadataMap.values().stream()
+                                .filter(meta -> {
+                                    return meta.getStatus() != AgentStatus.ACTIVE;
+                                })
+                                .findFirst();
+                                
+                        if (inactiveAgent.isPresent()) {
+                            var meta = inactiveAgent.get();
+                            throw new AgentInactiveException("Agent is inactive: " + meta.getUuid());
+                        }
 
-                    return Flux.fromIterable(plan.getBlocks())
-                            .flatMap(block -> blockExecutor.executeBlockReactive(
-                                    block, metadataMap, new ConcurrentHashMap<>()
-                            ))
-                            .collectMap(TaskResult::getTaskId, Function.identity());
-                })
-                .timeout(Duration.ofSeconds(10));
+                        return Flux.fromIterable(plan.getBlocks())
+                                .flatMap(block -> blockExecutor.executeBlockReactive(
+                                        block, metadataMap, new ConcurrentHashMap<>()
+                                ))
+                                .collectMap(TaskResult::getTaskId, Function.identity());
+                    })
+                    .timeout(Duration.ofSeconds(10));
         });
 
-        return executionMono.transform(metricOperator.measure("orchestration.executor"));
+        return executionMono
+                .transform(metricOperator.measure("orchestration.executor"));
     }
 
     private Mono<Map<String, TaskResult>> fallbackExecutePlanReactive(

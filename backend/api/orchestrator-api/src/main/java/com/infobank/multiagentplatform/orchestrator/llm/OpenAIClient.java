@@ -15,6 +15,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 
 import java.util.List;
 import java.util.Map;
@@ -31,11 +32,13 @@ public class OpenAIClient implements LLMClient {
     private final String model;
     private final PromptBuilder promptBuilder;
     private final PlanJsonParser planJsonParser;
+    private final Scheduler boundedElasticScheduler;
 
     public OpenAIClient(WebClient.Builder webClientBuilder,
                         LLMClientProperties props,
                         PromptBuilder promptBuilder,
-                        PlanJsonParser planJsonParser) {
+                        PlanJsonParser planJsonParser,
+                        @Qualifier("boundedElasticScheduler") Scheduler boundedElasticScheduler) {
 
         this.webClient = webClientBuilder
                 .baseUrl(props.getApiUrl())
@@ -46,6 +49,7 @@ public class OpenAIClient implements LLMClient {
         this.model           = props.getModel();
         this.promptBuilder   = promptBuilder;
         this.planJsonParser  = planJsonParser;
+        this.boundedElasticScheduler = boundedElasticScheduler;
     }
 
 
@@ -56,13 +60,12 @@ public class OpenAIClient implements LLMClient {
     public Mono<ExecutionPlan> plan(OrchestrationServiceRequest request, Mono<List<AgentSummaryResponse>> agentSummaries) {
         Mono<String> prompt = promptBuilder.buildPrompt(request, agentSummaries);
         return callOpenAI(prompt)
-                .flatMap(response -> {
-                    try {
-                        return Mono.just(planJsonParser.parse(response));
-                    } catch (PlanParsingException e) {
-                        return Mono.error(e);
-                    }
-                });
+                .flatMap(response -> 
+                    // JSON 파싱을 별도 스레드에서 비동기 처리
+                    Mono.fromCallable(() -> planJsonParser.parse(response))
+                            .subscribeOn(boundedElasticScheduler)
+                            .onErrorMap(PlanParsingException.class, e -> e) // PlanParsingException은 그대로 전파
+                );
     }
 
     private Mono<ExecutionPlan> planFallback(OrchestrationServiceRequest request,

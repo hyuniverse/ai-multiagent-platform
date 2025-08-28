@@ -6,10 +6,12 @@ import com.infobank.multiagentplatform.core.contract.agent.response.AgentInvocat
 import com.infobank.multiagentplatform.invoker.domain.AgentInvoker;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 
 import java.time.Duration;
 
@@ -21,11 +23,14 @@ public class RestAgentInvoker implements AgentInvoker {
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
+    private final Scheduler boundedElasticScheduler;
 
     public RestAgentInvoker(WebClient.Builder webClientBuilder,
-                            ObjectMapper objectMapper) {
+                            ObjectMapper objectMapper,
+                            @Qualifier("boundedElasticScheduler") Scheduler boundedElasticScheduler) {
         this.webClient = webClientBuilder.build();
         this.objectMapper = objectMapper;
+        this.boundedElasticScheduler = boundedElasticScheduler;
     }
 
     @CircuitBreaker(name = "agent-cb", fallbackMethod = "fallbackInvoke")
@@ -42,6 +47,7 @@ public class RestAgentInvoker implements AgentInvoker {
                 .timeout(Duration.ofMillis(30000))
                 .flatMap(raw ->
                         Mono.fromCallable(() -> objectMapper.readTree(raw))
+                                .subscribeOn(boundedElasticScheduler)
                                 .map(parsed -> AgentInvocationResponse.of(raw, parsed))
                 );
     }
