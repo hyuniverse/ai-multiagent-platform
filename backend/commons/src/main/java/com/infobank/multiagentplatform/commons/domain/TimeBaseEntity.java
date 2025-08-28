@@ -1,33 +1,29 @@
 package com.infobank.multiagentplatform.commons.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.data.relational.core.mapping.Column;
 
 import java.time.LocalDateTime;
 
 import static lombok.AccessLevel.PROTECTED;
 
-@EntityListeners(AuditingEntityListener.class)
-@MappedSuperclass
+
 @Getter
 @NoArgsConstructor(access = PROTECTED)
 public class TimeBaseEntity {
 
-    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Column("is_deleted")
     private boolean isDeleted;
 
     @CreatedDate
-    @Column(nullable = false, updatable = false, columnDefinition = "datetime default current_timestamp")
+    @Column("created_date_time")
     private LocalDateTime createdDateTime;
 
     @LastModifiedDate
-    @Column(nullable = false, columnDefinition = "datetime default current_timestamp on update current_timestamp")
+    @Column("last_modified_date_time")
     private LocalDateTime lastModifiedDateTime;
 
     protected TimeBaseEntity(boolean isDeleted) {
