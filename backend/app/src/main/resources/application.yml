@@ -16,8 +16,8 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD}
     pool:
       enabled: true
-      initial-size: 10      # 초기 연결 수 증가 (5 -> 10)
-      max-size: 50          # 최대 연결 수 증가 (20 -> 50)
+      initial-size: 10
+      max-size: 50
       max-idle-time: 30m
       max-acquire-time: 5s  # 연결 획득 최대 대기 시간
       max-create-connection-time: 5s  # 새 연결 생성 최대 시간
@@ -48,7 +48,7 @@ broker:
 orchestrator:
   http:
     connect-timeout: 1000ms   # 1초 연결 타임아웃
-    read-timeout:    30000ms   # 2초 응답 대기 타임아웃
+    read-timeout:    1000ms   # 1초 응답 대기 타임아웃
 
 llm:
   client:
@@ -56,8 +56,8 @@ llm:
     api-url: http://wiremock:8080/v1/chat/completions
     # https://api.openai.com/v1/chat/completions
     model: gpt-4
-    connect-timeout: 10s
-    read-timeout:    15s
+    connect-timeout: 1s
+    read-timeout:    1s
 
 agent:
   client:
@@ -92,7 +92,7 @@ resilience4j:
   circuitbreaker:
     instances:
       executorCircuit:
-        slidingWindowSize: 20         # 슬라이딩 윈도우 크기 증가 (10 -> 20)
+        slidingWindowSize: 20
         failureRateThreshold: 50
         waitDurationInOpenState: 5s
       openAIClientCB:
@@ -101,11 +101,11 @@ resilience4j:
         failureRateThreshold: 50
         waitDurationInOpenState: 30s
       brokerCB:
-        slidingWindowSize: 10         # 슬라이딩 윈도우 크기 증가 (5 -> 10)
+        slidingWindowSize: 10
         slidingWindowType: COUNT_BASED
-        failureRateThreshold: 80      # 실패율 임계값 조정 (100 -> 80)
-        waitDurationInOpenState: 30s  # 대기 시간 단축 (60s -> 30s)
-      agent-cb:                       # RestAgentInvoker용 Circuit Breaker 추가
+        failureRateThreshold: 80
+        waitDurationInOpenState: 30s
+      agent-cb:
         slidingWindowSize: 20
         slidingWindowType: COUNT_BASED
         failureRateThreshold: 60
@@ -114,8 +114,8 @@ resilience4j:
   bulkhead:
     instances:
       agent-bh:
-        max-concurrent-calls: 200     # 동시 호출 수 증가 (100 -> 200)
-        max-wait-duration: 1s         # 대기 시간 증가 (500ms -> 1s)
+        max-concurrent-calls: 200
+        max-wait-duration: 1s
 
 management:
   endpoints:

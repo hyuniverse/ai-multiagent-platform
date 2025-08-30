@@ -17,6 +17,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -102,6 +103,7 @@ public class OpenAIClient implements LLMClient {
                     .onStatus(HttpStatusCode::isError,
                             c -> c.createException().flatMap(Mono::error))
                     .bodyToMono(JsonNode.class)
+                    .timeout(Duration.ofMillis(500))
                     .handle((resp, sink) -> {
                         JsonNode choices = Optional.ofNullable(resp)
                                 .map(r -> r.path("choices"))

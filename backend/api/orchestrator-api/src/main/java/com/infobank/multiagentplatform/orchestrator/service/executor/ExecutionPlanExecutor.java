@@ -63,7 +63,7 @@ public class ExecutionPlanExecutor {
                                 ))
                                 .collectMap(TaskResult::getTaskId, Function.identity());
                     })
-                    .timeout(Duration.ofSeconds(10));
+                    .timeout(Duration.ofSeconds(2));
         });
 
         return executionMono

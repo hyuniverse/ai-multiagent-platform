@@ -1,5 +1,7 @@
 package com.infobank.multiagentplatform.invoker.domain;
 
+import reactor.core.publisher.Mono;
+
 public interface AgentHealthInvoker {
-    boolean ping(String endpoint);
+    Mono<Boolean> ping(String endpoint);
 }

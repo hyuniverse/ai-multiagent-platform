@@ -35,9 +35,7 @@ public class AgentService {
 
         AgentMetadata metadata = request.toMetadata();
 
-        return Mono.fromCallable(() -> {
-                    AgentEntity entity = AgentEntity.create(metadata);
-                })
+        return Mono.fromCallable(() -> AgentEntity.create(metadata))
                 .flatMap(entity -> {
                     return repository.saveWithEnumCast(entity)
                             .doOnError(error -> log.error("AgentEntity 저장 실패: {}", error.getMessage(), error));

@@ -4,6 +4,8 @@ import com.infobank.multiagentplatform.commons.api.ApiResponse;
 import com.infobank.multiagentplatform.core.contract.agent.request.AgentBatchRequest;
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentDetailResponse;
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentSummaryResponse;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +35,8 @@ public class RestBrokerClient implements BrokerClient {
     }
 
     @Override
+    @CircuitBreaker(name = "brokerCB", fallbackMethod = "fallbackGetAgentMetadataBatch")
+    @Retry(name = "brokerRetry")
     public Mono<List<AgentDetailResponse>> getAgentMetadataBatch(List<String> agentIds) {
         return webClient.post()
                 .uri("/batch")
@@ -51,6 +55,8 @@ public class RestBrokerClient implements BrokerClient {
     }
 
     @Override
+    @CircuitBreaker(name = "brokerCB", fallbackMethod = "fallbackGetAgentSummaries")
+    @Retry(name = "brokerRetry")
     public Mono<List<AgentSummaryResponse>> getAgentSummaries() {
         
         return webClient.get()
@@ -65,5 +71,16 @@ public class RestBrokerClient implements BrokerClient {
                     }
                     sink.next(resp.getData());
                 });
+    }
+
+    // Fallback Methods
+    private Mono<List<AgentDetailResponse>> fallbackGetAgentMetadataBatch(List<String> agentIds, Throwable ex) {
+        log.warn("BrokerClient.getAgentMetadataBatch fallback 실행: {}", ex.getMessage());
+        return Mono.error(new IllegalStateException("Agent metadata batch 조회 실패: " + ex.getMessage(), ex));
+    }
+
+    private Mono<List<AgentSummaryResponse>> fallbackGetAgentSummaries(Throwable ex) {
+        log.warn("BrokerClient.getAgentSummaries fallback 실행: {}", ex.getMessage());
+        return Mono.error(new IllegalStateException("Agent summaries 조회 실패: " + ex.getMessage(), ex));
     }
 }

@@ -15,6 +15,8 @@ dependencies {
     implementation(project(":core:domain"))
     implementation(project(":core:contract"))
     implementation(enforcedPlatform("org.springframework.boot:spring-boot-dependencies:3.4.4"))
+    implementation(platform("io.github.resilience4j:resilience4j-bom:2.0.2"))
+    implementation("io.github.resilience4j:resilience4j-spring-boot3")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter")
     compileOnly("org.projectlombok:lombok:1.18.30")

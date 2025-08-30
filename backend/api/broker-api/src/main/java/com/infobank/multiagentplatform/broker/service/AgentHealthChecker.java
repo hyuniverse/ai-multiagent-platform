@@ -6,7 +6,6 @@ import com.infobank.multiagentplatform.invoker.domain.AgentHealthInvoker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers; // Schedulers import
 
 @Component
 @RequiredArgsConstructor
@@ -17,8 +16,6 @@ public class AgentHealthChecker {
     public Mono<Boolean> isReachable(ProtocolType protocol, String endpoint) {
         AgentHealthInvoker invoker = factory.getHealthInvoker(protocol);
 
-        return Mono.fromCallable(() -> invoker.ping(endpoint))
-                .subscribeOn(Schedulers.boundedElastic())
-                .onErrorReturn(false);
+        return invoker.ping(endpoint);
     }
 }

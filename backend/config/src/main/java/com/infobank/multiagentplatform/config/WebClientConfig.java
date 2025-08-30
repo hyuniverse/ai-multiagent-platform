@@ -110,7 +110,7 @@ public class WebClientConfig {
         // Reactor Netty HttpClient 구성
         HttpClient httpClient = HttpClient.create(connectionProvider)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) connectTimeout.toMillis())
-                .responseTimeout(Duration.ofSeconds(10))
+                .responseTimeout(Duration.ofMillis(500))
                 .doOnConnected(conn ->
                         conn.addHandlerLast(new ReadTimeoutHandler(readTimeout.toMillis(), TimeUnit.MILLISECONDS))
                                 .addHandlerLast(new WriteTimeoutHandler(readTimeout.toMillis(), TimeUnit.MILLISECONDS))

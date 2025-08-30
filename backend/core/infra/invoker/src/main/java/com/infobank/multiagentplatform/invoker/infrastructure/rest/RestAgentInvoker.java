@@ -44,7 +44,7 @@ public class RestAgentInvoker implements AgentInvoker {
                 .onStatus(status -> status.isError(),
                         resp -> resp.createException().flatMap(Mono::error))
                 .bodyToMono(String.class)
-                .timeout(Duration.ofMillis(30000))
+                .timeout(Duration.ofMillis(500))
                 .flatMap(raw ->
                         Mono.fromCallable(() -> objectMapper.readTree(raw))
                                 .subscribeOn(boundedElasticScheduler)
