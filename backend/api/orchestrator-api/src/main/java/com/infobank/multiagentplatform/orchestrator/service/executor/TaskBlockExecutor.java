@@ -9,18 +9,20 @@ import reactor.core.publisher.Flux;
 
 import java.util.Map;
 
+import com.infobank.multiagentplatform.commons.metrics.ReactiveMetricOperator;
+
 @Component
 public class TaskBlockExecutor {
     private final SingleTaskExecutor singleTaskExecutor;
-//    private final TaskExecutor planTaskExecutor;
+    private final ReactiveMetricOperator metricOperator;
 
     @Autowired
     public TaskBlockExecutor(
-            SingleTaskExecutor singleTaskExecutor
-//            @Qualifier("applicationTaskExecutor") TaskExecutor planTaskExecutor
+            SingleTaskExecutor singleTaskExecutor,
+            ReactiveMetricOperator metricOperator
     ) {
         this.singleTaskExecutor = singleTaskExecutor;
-//        this.planTaskExecutor   = planTaskExecutor;
+        this.metricOperator = metricOperator;
     }
 
     public Flux<TaskResult> executeBlockReactive(TaskBlock block,
@@ -30,7 +32,6 @@ public class TaskBlockExecutor {
                 .flatMap(task ->
                         singleTaskExecutor
                                 .executeReactive(task, metadataMap, results)
-//                                .subscribeOn(Schedulers.fromExecutor(planTaskExecutor))
                 );
     }
 }

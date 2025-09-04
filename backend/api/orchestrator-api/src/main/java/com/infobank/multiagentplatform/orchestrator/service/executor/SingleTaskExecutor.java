@@ -17,10 +17,13 @@ import reactor.util.retry.Retry;
 import java.time.Duration;
 import java.util.Map;
 
+import com.infobank.multiagentplatform.commons.metrics.ReactiveMetricOperator;
+
 @Component
 @RequiredArgsConstructor
 public class SingleTaskExecutor {
     private final AgentInvokerFactory invokerFactory;
+    private final ReactiveMetricOperator metricOperator;
 
     public Mono<TaskResult> executeReactive(
             AgentTask task,
@@ -40,6 +43,7 @@ public class SingleTaskExecutor {
         AgentInvoker invoker = invokerFactory.getInvoker(meta.getProtocol());
 
         return invoker.invoke(request)
+                .transform(metricOperator.measure("orchestration.executor.task"))
                 .map(response ->
                         TaskResult.of(
                                 task.getId(),

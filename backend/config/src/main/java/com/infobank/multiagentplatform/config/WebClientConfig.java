@@ -7,7 +7,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,10 +28,13 @@ import reactor.netty.resources.ConnectionProvider;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Configuration
-@Slf4j
 public class WebClientConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(WebClientConfig.class);
 
     @Bean
     @Qualifier("boundedElasticScheduler")
@@ -90,6 +92,7 @@ public class WebClientConfig {
     }
 
     @Bean
+    @Primary
     public ConnectionProvider connectionProvider() {
         return ConnectionProvider.builder("custom")
                 .maxConnections(500)
@@ -97,47 +100,116 @@ public class WebClientConfig {
                 .maxLifeTime(Duration.ofSeconds(60))
                 .pendingAcquireTimeout(Duration.ofSeconds(5))
                 .evictInBackground(Duration.ofSeconds(120))
+                .metrics(true)
                 .build();
     }
 
     @Bean
-    public WebClient.Builder webClientBuilder(
-            @Value("${orchestrator.http.connect-timeout}") Duration connectTimeout,
-            @Value("${orchestrator.http.read-timeout}")    Duration readTimeout,
-            ObjectMapper objectMapper,
-            ConnectionProvider connectionProvider) {
+    @Qualifier("llmConnectionProvider")
+    public ConnectionProvider llmConnectionProvider() {
+        return ConnectionProvider.builder("llm-pool")
+                .maxConnections(200)
+                .maxIdleTime(Duration.ofSeconds(30))
+                .pendingAcquireTimeout(Duration.ofSeconds(3))
+                .evictInBackground(Duration.ofSeconds(120))
+                .metrics(true)
+                .build();
+    }
 
-        // Reactor Netty HttpClient 구성
-        HttpClient httpClient = HttpClient.create(connectionProvider)
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) connectTimeout.toMillis())
-                .responseTimeout(Duration.ofMillis(500))
-                .doOnConnected(conn ->
-                        conn.addHandlerLast(new ReadTimeoutHandler(readTimeout.toMillis(), TimeUnit.MILLISECONDS))
-                                .addHandlerLast(new WriteTimeoutHandler(readTimeout.toMillis(), TimeUnit.MILLISECONDS))
-                );
+    @Bean
+    @Qualifier("agentConnectionProvider")
+    public ConnectionProvider agentConnectionProvider() {
+        return ConnectionProvider.builder("agent-pool")
+                .maxConnections(200)
+                .maxIdleTime(Duration.ofSeconds(30))
+                .pendingAcquireTimeout(Duration.ofSeconds(3))
+                .evictInBackground(Duration.ofSeconds(120))
+                .metrics(true)
+                .build();
+    }
 
-        ReactorClientHttpConnector connector = new ReactorClientHttpConnector(httpClient);
-
-        // Jackson 코덱 최적화 - 버퍼 크기 증가로 성능 향상
-        ExchangeStrategies exchangeStrategies = ExchangeStrategies.builder()
+    private ExchangeStrategies exchangeStrategies(ObjectMapper objectMapper) {
+        return ExchangeStrategies.builder()
                 .codecs(configurer -> {
                     configurer.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder(objectMapper));
                     configurer.defaultCodecs().jackson2JsonDecoder(new Jackson2JsonDecoder(objectMapper));
                     configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024); // 10MB
                 })
                 .build();
+    }
 
-        ExchangeFilterFunction mdcFilter = ExchangeFilterFunction.ofRequestProcessor(req -> {
+    private ExchangeFilterFunction mdcFilter() {
+        return ExchangeFilterFunction.ofRequestProcessor(req -> {
             String traceId = MDC.get("traceId");
             ClientRequest filtered = ClientRequest.from(req)
                     .header("X-B3-TraceId", traceId != null ? traceId : "")
                     .build();
             return Mono.just(filtered);
         });
+    }
+
+    private HttpClient httpClient(ConnectionProvider provider, Duration connectTimeout, Duration readTimeout) {
+        return HttpClient.create(provider)
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) connectTimeout.toMillis())
+                .responseTimeout(Duration.ofSeconds(10))
+                .doOnConnected(conn ->
+                        conn.addHandlerLast(new ReadTimeoutHandler(readTimeout.toMillis(), TimeUnit.MILLISECONDS))
+                                .addHandlerLast(new WriteTimeoutHandler(readTimeout.toMillis(), TimeUnit.MILLISECONDS))
+                )
+                .metrics(true, s -> s);
+    }
+
+    @Bean
+    @Primary
+    public WebClient.Builder webClientBuilder(
+            @Value("${orchestrator.http.connect-timeout}") Duration connectTimeout,
+            @Value("${orchestrator.http.read-timeout}")    Duration readTimeout,
+            ObjectMapper objectMapper,
+            ConnectionProvider connectionProvider) {
+
+        ReactorClientHttpConnector connector = new ReactorClientHttpConnector(
+                httpClient(connectionProvider, connectTimeout, readTimeout)
+        );
 
         return WebClient.builder()
                 .clientConnector(connector)
-                .exchangeStrategies(exchangeStrategies)
-                .filter(mdcFilter);
+                .exchangeStrategies(exchangeStrategies(objectMapper))
+                .filter(mdcFilter());
+    }
+
+    @Bean
+    @Qualifier("llmWebClientBuilder")
+    public WebClient.Builder llmWebClientBuilder(
+            @Value("${llm.client.connect-timeout}") Duration connectTimeout,
+            @Value("${llm.client.read-timeout}")    Duration readTimeout,
+            ObjectMapper objectMapper,
+            @Qualifier("llmConnectionProvider") ConnectionProvider connectionProvider) {
+
+        ReactorClientHttpConnector connector = new ReactorClientHttpConnector(
+                httpClient(connectionProvider, connectTimeout, readTimeout)
+        );
+
+        return WebClient.builder()
+                .clientConnector(connector)
+                .exchangeStrategies(exchangeStrategies(objectMapper))
+                .filter(mdcFilter());
+    }
+
+    @Bean
+    @Qualifier("agentWebClientBuilder")
+    public WebClient.Builder agentWebClientBuilder(
+        @Value("${agent.client.connect-timeout}") Duration connectTimeout,
+        @Value("${agent.client.read-timeout}")    Duration readTimeout,
+        ObjectMapper objectMapper,
+        @Qualifier("agentConnectionProvider") ConnectionProvider connectionProvider) {
+
+        ReactorClientHttpConnector connector = new ReactorClientHttpConnector(
+                httpClient(connectionProvider, connectTimeout, readTimeout)
+        );
+
+        return WebClient.builder()
+                .clientConnector(connector)
+                .exchangeStrategies(exchangeStrategies(objectMapper))
+                .filter(mdcFilter());
     }
 }

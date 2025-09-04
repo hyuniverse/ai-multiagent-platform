@@ -15,6 +15,8 @@ import reactor.core.scheduler.Scheduler;
 
 import java.time.Duration;
 
+import com.infobank.multiagentplatform.commons.metrics.ReactiveMetricOperator;
+
 /**
  * REST 기반 AgentInvoker 구현체 (WebClient 사용)
  */
@@ -24,19 +26,22 @@ public class RestAgentInvoker implements AgentInvoker {
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
     private final Scheduler boundedElasticScheduler;
+    private final ReactiveMetricOperator metricOperator;
 
-    public RestAgentInvoker(WebClient.Builder webClientBuilder,
+    public RestAgentInvoker(@Qualifier("agentWebClientBuilder") WebClient.Builder webClientBuilder,
                             ObjectMapper objectMapper,
-                            @Qualifier("boundedElasticScheduler") Scheduler boundedElasticScheduler) {
+                            @Qualifier("boundedElasticScheduler") Scheduler boundedElasticScheduler,
+                            ReactiveMetricOperator metricOperator) {
         this.webClient = webClientBuilder.build();
         this.objectMapper = objectMapper;
         this.boundedElasticScheduler = boundedElasticScheduler;
+        this.metricOperator = metricOperator;
     }
 
     @CircuitBreaker(name = "agent-cb", fallbackMethod = "fallbackInvoke")
     @Bulkhead(name = "agent-bh")
     public Mono<AgentInvocationResponse> invoke(AgentInvocationRequest request) {
-        return webClient.post()
+        Mono<String> httpMono = webClient.post()
                 .uri(request.getEndpoint())
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
@@ -45,9 +50,13 @@ public class RestAgentInvoker implements AgentInvoker {
                         resp -> resp.createException().flatMap(Mono::error))
                 .bodyToMono(String.class)
                 .timeout(Duration.ofMillis(500))
+                .transform(metricOperator.measure("orchestration.executor.task.http"));
+
+        return httpMono
                 .flatMap(raw ->
                         Mono.fromCallable(() -> objectMapper.readTree(raw))
                                 .subscribeOn(boundedElasticScheduler)
+                                .transform(metricOperator.measure("orchestration.executor.task.parse"))
                                 .map(parsed -> AgentInvocationResponse.of(raw, parsed))
                 );
     }

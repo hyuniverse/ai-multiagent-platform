@@ -55,8 +55,11 @@ public class OrchestrationService {
                         .doBeforeRetry(retrySignal -> log.warn("에이전트 비활성화로 인한 재시도: {} 회차", retrySignal.totalRetries() + 1))
                 );
 
-        Mono<OrchestrationResponse> finalMono = postProcessor.process(rawResult)
-                .transform(metricOperator.measure("orchestration.postprocess"))
+        Mono<OrchestrationResponse> finalMono = rawResult
+                .flatMap(results ->
+                        postProcessor.process(Mono.just(results))
+                                .transform(metricOperator.measure("orchestration.postprocess"))
+                )
                 .onErrorResume(AgentInactiveException.class, ex -> {
                     log.error("에이전트 상태 불일치 발생: {}", ex.getMessage());
                     return Mono.error(new IllegalStateException(

@@ -6,7 +6,6 @@
   "response": {
     "status": 200,
     "headers": { "Content-Type": "application/json" },
-    "fixedDelayMilliseconds": 300,
     "body": "{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"blocks\\\":[{\\\"tasks\\\":[{\\\"id\\\":\\\"task1\\\",\\\"agentId\\\":\\\"bbaa2ce2-de25-4065-87d3-242b4bbd2017\\\",\\\"instruction\\\":\\\"mock instruction\\\",\\\"inputFrom\\\":null}]}],\\\"unassigned\\\":[]}\"}}]}"
   }
 }

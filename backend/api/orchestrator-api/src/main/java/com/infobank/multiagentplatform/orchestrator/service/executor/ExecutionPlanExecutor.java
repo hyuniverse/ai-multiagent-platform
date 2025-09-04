@@ -42,28 +42,31 @@ public class ExecutionPlanExecutor {
                     .distinct()
                     .collect(Collectors.toList());
 
-            return brokerClient.getAgentMetadataBatch(agentIds)
+            Mono<Map<String, AgentDetailResponse>> metadataMono = brokerClient.getAgentMetadataBatch(agentIds)
                     .flatMapMany(Flux::fromIterable)
                     .collectMap(AgentDetailResponse::getUuid, Function.identity())
-                    .flatMap(metadataMap -> {
-                        var inactiveAgent = metadataMap.values().stream()
-                                .filter(meta -> {
-                                    return meta.getStatus() != AgentStatus.ACTIVE;
-                                })
-                                .findFirst();
-                                
-                        if (inactiveAgent.isPresent()) {
-                            var meta = inactiveAgent.get();
-                            throw new AgentInactiveException("Agent is inactive: " + meta.getUuid());
-                        }
+                    .transform(metricOperator.measure("orchestration.executor.metadata"));
 
-                        return Flux.fromIterable(plan.getBlocks())
-                                .flatMap(block -> blockExecutor.executeBlockReactive(
-                                        block, metadataMap, new ConcurrentHashMap<>()
-                                ))
-                                .collectMap(TaskResult::getTaskId, Function.identity());
-                    })
-                    .timeout(Duration.ofSeconds(2));
+            return metadataMono.flatMap(metadataMap -> {
+                var inactiveAgent = metadataMap.values().stream()
+                        .filter(meta -> meta.getStatus() != AgentStatus.ACTIVE)
+                        .findFirst();
+
+                if (inactiveAgent.isPresent()) {
+                    var meta = inactiveAgent.get();
+                    throw new AgentInactiveException("Agent is inactive: " + meta.getUuid());
+                }
+
+                Mono<Map<String, TaskResult>> blocksMono = Flux.fromIterable(plan.getBlocks())
+                        .flatMap(block -> blockExecutor.executeBlockReactive(
+                                block, metadataMap, new ConcurrentHashMap<>()
+                        ))
+                        .collectMap(TaskResult::getTaskId, Function.identity())
+                        .transform(metricOperator.measure("orchestration.executor.blocks"));
+
+                return blocksMono;
+            })
+            .timeout(Duration.ofSeconds(2));
         });
 
         return executionMono

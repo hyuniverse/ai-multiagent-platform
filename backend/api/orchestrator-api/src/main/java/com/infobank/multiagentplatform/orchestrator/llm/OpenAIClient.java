@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.infobank.multiagentplatform.commons.metrics.ReactiveMetricOperator;
+
 /**
  * OpenAI API 호출 및 ExecutionPlan 수립 구현체
  */
@@ -34,12 +36,14 @@ public class OpenAIClient implements LLMClient {
     private final PromptBuilder promptBuilder;
     private final PlanJsonParser planJsonParser;
     private final Scheduler boundedElasticScheduler;
+    private final ReactiveMetricOperator metricOperator;
 
-    public OpenAIClient(WebClient.Builder webClientBuilder,
+    public OpenAIClient(@Qualifier("llmWebClientBuilder") WebClient.Builder webClientBuilder,
                         LLMClientProperties props,
                         PromptBuilder promptBuilder,
                         PlanJsonParser planJsonParser,
-                        @Qualifier("boundedElasticScheduler") Scheduler boundedElasticScheduler) {
+                        @Qualifier("boundedElasticScheduler") Scheduler boundedElasticScheduler,
+                        ReactiveMetricOperator metricOperator) {
 
         this.webClient = webClientBuilder
                 .baseUrl(props.getApiUrl())
@@ -51,6 +55,7 @@ public class OpenAIClient implements LLMClient {
         this.promptBuilder   = promptBuilder;
         this.planJsonParser  = planJsonParser;
         this.boundedElasticScheduler = boundedElasticScheduler;
+        this.metricOperator  = metricOperator;
     }
 
 
@@ -59,13 +64,19 @@ public class OpenAIClient implements LLMClient {
     @CircuitBreaker(name = "openAIClientCB", fallbackMethod = "planFallback")
     // Plan 생성
     public Mono<ExecutionPlan> plan(OrchestrationServiceRequest request, Mono<List<AgentSummaryResponse>> agentSummaries) {
-        Mono<String> prompt = promptBuilder.buildPrompt(request, agentSummaries);
-        return callOpenAI(prompt)
-                .flatMap(response -> 
-                    // JSON 파싱을 별도 스레드에서 비동기 처리
-                    Mono.fromCallable(() -> planJsonParser.parse(response))
-                            .subscribeOn(boundedElasticScheduler)
-                            .onErrorMap(PlanParsingException.class, e -> e) // PlanParsingException은 그대로 전파
+        Mono<String> prompt = promptBuilder
+                .buildPrompt(request, agentSummaries)
+                .transform(metricOperator.measure("orchestration.planner.prompt"));
+
+        Mono<String> httpMono = callOpenAI(prompt);
+
+        return httpMono
+                .flatMap(response ->
+                        // JSON 파싱을 별도 스레드에서 비동기 처리
+                        Mono.fromCallable(() -> planJsonParser.parse(response))
+                                .subscribeOn(boundedElasticScheduler)
+                                .transform(metricOperator.measure("orchestration.planner.parse"))
+                                .onErrorMap(PlanParsingException.class, e -> e) // PlanParsingException은 그대로 전파
                 );
     }
 
@@ -97,23 +108,25 @@ public class OpenAIClient implements LLMClient {
                     "messages", List.of(Map.of("role", "user", "content", prompt))
             );
 
-            return webClient.post()
+            Mono<String> httpChain = webClient.post()
                     .bodyValue(body)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError,
                             c -> c.createException().flatMap(Mono::error))
                     .bodyToMono(JsonNode.class)
                     .timeout(Duration.ofMillis(500))
-                    .handle((resp, sink) -> {
+                    .map(resp -> {
                         JsonNode choices = Optional.ofNullable(resp)
                                 .map(r -> r.path("choices"))
                                 .orElseThrow(() -> new IllegalStateException("OpenAI 응답이 null입니다."));
                         if (!choices.isArray() || choices.isEmpty()) {
-                            sink.error(new IllegalStateException("No choices in OpenAI response"));
-                            return;
+                            throw new IllegalStateException("No choices in OpenAI response");
                         }
-                        sink.next(choices.get(0).path("message").path("content").asText());
-                    });
+                        return choices.get(0).path("message").path("content").asText();
+                    })
+                    .transform(metricOperator.measure("orchestration.planner.http"));
+
+            return httpChain;
         });
     }
 
