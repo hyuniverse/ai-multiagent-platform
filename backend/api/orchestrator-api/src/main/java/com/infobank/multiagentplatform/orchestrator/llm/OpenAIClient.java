@@ -24,6 +24,7 @@ import java.util.Optional;
 
 import com.infobank.multiagentplatform.commons.metrics.ReactiveMetricOperator;
 import org.springframework.beans.factory.annotation.Value;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 
 /**
  * OpenAI API 호출 및 ExecutionPlan 수립 구현체
@@ -66,6 +67,7 @@ public class OpenAIClient implements LLMClient {
     @Override
     @Retry(name = "openAIClientRetry")
     @CircuitBreaker(name = "openAIClientCB", fallbackMethod = "planFallback")
+    @RateLimiter(name = "openaiRL")
     // Plan 생성
     public Mono<ExecutionPlan> plan(OrchestrationServiceRequest request, Mono<List<AgentSummaryResponse>> agentSummaries) {
         Mono<String> prompt = promptBuilder
@@ -93,6 +95,7 @@ public class OpenAIClient implements LLMClient {
     @Override
     @Retry(name = "openAIClientRetry")
     @CircuitBreaker(name = "openAIClientCB", fallbackMethod = "textFallback")
+    @RateLimiter(name = "openaiRL")
     // ping 테스트 용
     public Mono<String> generateText(Mono<String> prompt) {
         return callOpenAI(prompt);

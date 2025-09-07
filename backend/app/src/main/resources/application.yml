@@ -169,6 +169,13 @@ resilience4j:
         max-concurrent-calls: 200
         max-wait-duration: 1s
 
+  ratelimiter:
+    instances:
+      openaiRL:
+        limitForPeriod: 100
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0
+
 management:
   endpoints:
     web:
