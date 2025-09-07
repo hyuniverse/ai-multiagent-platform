@@ -41,7 +41,7 @@ public class ExecutionPlanExecutor {
         this.planTimeout = planTimeout;
     }
 
-    @CircuitBreaker(name = "executorCircuit", fallbackMethod = "fallbackExecutePlanReactive")
+    @CircuitBreaker(name = "executorCB", fallbackMethod = "fallbackExecutePlanReactive")
     public Mono<Map<String, TaskResult>> executePlanReactive(Mono<ExecutionPlan> planMono) {
 
         Mono<Map<String, TaskResult>> executionMono = planMono.flatMap(plan -> {

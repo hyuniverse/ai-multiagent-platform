@@ -65,8 +65,8 @@ public class OpenAIClient implements LLMClient {
 
 
     @Override
-    @Retry(name = "openAIClientRetry")
-    @CircuitBreaker(name = "openAIClientCB", fallbackMethod = "planFallback")
+    @Retry(name = "openaiRetry")
+    @CircuitBreaker(name = "openaiCB", fallbackMethod = "planFallback")
     @RateLimiter(name = "openaiRL")
     // Plan 생성
     public Mono<ExecutionPlan> plan(OrchestrationServiceRequest request, Mono<List<AgentSummaryResponse>> agentSummaries) {
@@ -93,8 +93,8 @@ public class OpenAIClient implements LLMClient {
     }
 
     @Override
-    @Retry(name = "openAIClientRetry")
-    @CircuitBreaker(name = "openAIClientCB", fallbackMethod = "textFallback")
+    @Retry(name = "openaiRetry")
+    @CircuitBreaker(name = "openaiCB", fallbackMethod = "textFallback")
     @RateLimiter(name = "openaiRL")
     // ping 테스트 용
     public Mono<String> generateText(Mono<String> prompt) {

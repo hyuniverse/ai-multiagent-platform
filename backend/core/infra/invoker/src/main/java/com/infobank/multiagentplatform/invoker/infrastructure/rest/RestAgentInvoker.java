@@ -42,8 +42,8 @@ public class RestAgentInvoker implements AgentInvoker {
         this.operatorTimeout = operatorTimeout;
     }
 
-    @CircuitBreaker(name = "agent-cb", fallbackMethod = "fallbackInvoke")
-    @Bulkhead(name = "agent-bh")
+    @CircuitBreaker(name = "agentCB", fallbackMethod = "fallbackInvoke")
+    @Bulkhead(name = "agentBH")
     public Mono<AgentInvocationResponse> invoke(AgentInvocationRequest request) {
         Mono<String> httpMono = webClient.post()
                 .uri(request.getEndpoint())
