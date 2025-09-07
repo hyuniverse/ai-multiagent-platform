@@ -167,7 +167,7 @@ resilience4j:
     instances:
       agent-bh:
         max-concurrent-calls: 200
-        max-wait-duration: 1s
+        max-wait-duration: 200ms
 
   ratelimiter:
     instances:
