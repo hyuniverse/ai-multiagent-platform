@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.retry.Retry;
 
 import java.time.Duration;
 import java.util.Map;
@@ -24,12 +23,6 @@ public class AgentHealthReactiveService {
     private final AgentHealthChecker healthChecker;
     private final AgentSnapshotRepository snapshotRepository;
     private final AgentRepository agentRepository;
-
-    @Value("${orchestrator.retries.health.max-attempts:3}")
-    private int healthRetryMaxAttempts;
-
-    @Value("${orchestrator.retries.health.backoff:500ms}")
-    private Duration healthRetryBackoff;
 
     @Value("${orchestrator.timeouts.agent-health:500ms}")
     private Duration agentHealthTimeout;
@@ -83,7 +76,6 @@ public class AgentHealthReactiveService {
                                     return Mono.defer(() -> snapshotRepository.saveWithEnumCast(snapshot));
                                 })
                 )
-                .retryWhen(Retry.backoff(healthRetryMaxAttempts, healthRetryBackoff))
                 .timeout(agentHealthTimeout)
                 .onErrorResume(ex -> Mono.empty())
                 .then();

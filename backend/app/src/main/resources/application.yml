@@ -90,14 +90,7 @@ orchestrator:
     agent-health: 500ms
     plan-operator: 2000ms
     broker-operator: 2000ms
-  retries:
-    health:
-      max-attempts: 1
-      backoff: 500ms
-    parse:
-      max-attempts: 3
-      backoff: 1s
-  
+
 broker:
   service:
     url: http://localhost:8080/api/v1/agents

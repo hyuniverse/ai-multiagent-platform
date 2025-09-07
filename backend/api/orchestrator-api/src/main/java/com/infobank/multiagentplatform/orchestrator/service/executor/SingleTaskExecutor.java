@@ -10,12 +10,9 @@ import com.infobank.multiagentplatform.invoker.application.AgentInvokerFactory;
 import com.infobank.multiagentplatform.invoker.domain.AgentInvoker;
 import com.infobank.multiagentplatform.orchestrator.model.result.TaskResult;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
-import reactor.util.retry.Retry;
 
-import java.time.Duration;
 import java.util.Map;
 
 import com.infobank.multiagentplatform.commons.metrics.ReactiveMetricOperator;
@@ -25,12 +22,6 @@ import com.infobank.multiagentplatform.commons.metrics.ReactiveMetricOperator;
 public class SingleTaskExecutor {
     private final AgentInvokerFactory invokerFactory;
     private final ReactiveMetricOperator metricOperator;
-
-    @Value("${orchestrator.retries.parse.max-attempts:3}")
-    private int parseRetryMaxAttempts;
-
-    @Value("${orchestrator.retries.parse.backoff:1s}")
-    private Duration parseRetryBackoff;
 
     public Mono<TaskResult> executeReactive(
             AgentTask task,
@@ -57,9 +48,8 @@ public class SingleTaskExecutor {
                                 response.getRawResponse(),
                                 response.getParsedResult()
                         )
-                ).retryWhen(Retry.backoff(parseRetryMaxAttempts, parseRetryBackoff)
-                        .filter(err -> err instanceof PlanParsingException)
                 )
+                // Parsing errors are handled once and converted to a fallback result; no retries here.
                 .onErrorResume(PlanParsingException.class, ex ->
                         Mono.just(TaskResult.of(
                                 task.getId(),
