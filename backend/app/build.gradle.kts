@@ -37,6 +37,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.7.0")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
 
     compileOnly("org.springframework.boot:spring-boot-configuration-processor:3.4.4")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:3.4.4")

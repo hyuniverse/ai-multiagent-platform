@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.infobank.multiagentplatform.commons.metrics.ReactiveMetricOperator;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  * OpenAI API 호출 및 ExecutionPlan 수립 구현체
@@ -37,13 +38,15 @@ public class OpenAIClient implements LLMClient {
     private final PlanJsonParser planJsonParser;
     private final Scheduler boundedElasticScheduler;
     private final ReactiveMetricOperator metricOperator;
+    private final Duration operatorTimeout;
 
     public OpenAIClient(@Qualifier("llmWebClientBuilder") WebClient.Builder webClientBuilder,
                         LLMClientProperties props,
                         PromptBuilder promptBuilder,
                         PlanJsonParser planJsonParser,
                         @Qualifier("boundedElasticScheduler") Scheduler boundedElasticScheduler,
-                        ReactiveMetricOperator metricOperator) {
+                        ReactiveMetricOperator metricOperator,
+                        @Value("${orchestrator.timeouts.llm-operator:500ms}") Duration operatorTimeout) {
 
         this.webClient = webClientBuilder
                 .baseUrl(props.getApiUrl())
@@ -56,6 +59,7 @@ public class OpenAIClient implements LLMClient {
         this.planJsonParser  = planJsonParser;
         this.boundedElasticScheduler = boundedElasticScheduler;
         this.metricOperator  = metricOperator;
+        this.operatorTimeout = operatorTimeout;
     }
 
 
@@ -114,7 +118,7 @@ public class OpenAIClient implements LLMClient {
                     .onStatus(HttpStatusCode::isError,
                             c -> c.createException().flatMap(Mono::error))
                     .bodyToMono(JsonNode.class)
-                    .timeout(Duration.ofMillis(500))
+                    .timeout(operatorTimeout)
                     .map(resp -> {
                         JsonNode choices = Optional.ofNullable(resp)
                                 .map(r -> r.path("choices"))

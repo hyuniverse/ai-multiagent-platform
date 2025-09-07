@@ -38,13 +38,21 @@ public class WebClientConfig {
 
     @Bean
     @Qualifier("boundedElasticScheduler")
-    public Scheduler boundedElasticScheduler() {
+    public Scheduler boundedElasticScheduler(
+            @Value("${reactor.scheduler.bounded-elastic.max-threads:#{T(java.lang.Runtime).getRuntime().availableProcessors()*2}}") int maxThreads,
+            @Value("${reactor.scheduler.bounded-elastic.queue-capacity:10000}") int queueCapacity,
+            @Value("${reactor.scheduler.bounded-elastic.thread-name:json-parsing}") String threadName,
+            @Value("${reactor.scheduler.bounded-elastic.ttl-seconds:60}") int ttlSeconds,
+            @Value("${reactor.scheduler.bounded-elastic.daemon:true}") boolean daemon
+    ) {
+        log.info("[Scheduler] boundedElastic config => maxThreads={}, queueCapacity={}, ttlSeconds={}, threadName={}, daemon={}",
+                maxThreads, queueCapacity, ttlSeconds, threadName, daemon);
         return Schedulers.newBoundedElastic(
-                Runtime.getRuntime().availableProcessors() * 2,
-                Integer.MAX_VALUE, // 큐 크기
-                "json-parsing", // 스레드 이름
-                60, // TTL
-                true // daemon
+                maxThreads,
+                queueCapacity,
+                threadName,
+                ttlSeconds,
+                daemon
         );
     }
 
@@ -91,38 +99,64 @@ public class WebClientConfig {
         }
     }
 
+    // 공용 풀 (프로퍼티화, 기존 동작 기본값 유지)
     @Bean
     @Primary
-    public ConnectionProvider connectionProvider() {
-        return ConnectionProvider.builder("custom")
-                .maxConnections(500)
-                .maxIdleTime(Duration.ofSeconds(20))
-                .maxLifeTime(Duration.ofSeconds(60))
-                .pendingAcquireTimeout(Duration.ofSeconds(5))
+    public ConnectionProvider connectionProvider(
+            @Value("${webclient.default.pool.name:custom}") String poolName,
+            @Value("${webclient.default.pool.max-connections:500}") int maxConnections,
+            @Value("${webclient.default.pool.max-idle-time:20s}") Duration maxIdleTime,
+            @Value("${webclient.default.pool.max-life-time:60s}") Duration maxLifeTime,
+            @Value("${webclient.default.pool.pending-acquire-timeout:5s}") Duration pendingAcquireTimeout
+    ) {
+        log.info("[ConnectionPool][default] config => name={}, maxConnections={}, maxIdleTime={}, maxLifeTime={}, pendingAcquireTimeout={}",
+                poolName, maxConnections, maxIdleTime, maxLifeTime, pendingAcquireTimeout);
+        return ConnectionProvider.builder(poolName)
+                .maxConnections(maxConnections)
+                .maxIdleTime(maxIdleTime)
+                .maxLifeTime(maxLifeTime)
+                .pendingAcquireTimeout(pendingAcquireTimeout)
                 .evictInBackground(Duration.ofSeconds(120))
                 .metrics(true)
-                .build();
+                .build()
+                ;
     }
 
+    // LLM 전용 커넥션 풀 (프로퍼티화)
     @Bean
     @Qualifier("llmConnectionProvider")
-    public ConnectionProvider llmConnectionProvider() {
-        return ConnectionProvider.builder("llm-pool")
-                .maxConnections(200)
-                .maxIdleTime(Duration.ofSeconds(30))
-                .pendingAcquireTimeout(Duration.ofSeconds(3))
+    public ConnectionProvider llmConnectionProvider(
+            @Value("${webclient.llm.pool.name:llm-pool}") String poolName,
+            @Value("${webclient.llm.pool.max-connections:200}") int maxConnections,
+            @Value("${webclient.llm.pool.max-idle-time:30s}") Duration maxIdleTime,
+            @Value("${webclient.llm.pool.pending-acquire-timeout:3s}") Duration pendingAcquireTimeout
+    ) {
+        log.info("[ConnectionPool][llm] config => name={}, maxConnections={}, maxIdleTime={}, pendingAcquireTimeout={}",
+                poolName, maxConnections, maxIdleTime, pendingAcquireTimeout);
+        return ConnectionProvider.builder(poolName)
+                .maxConnections(maxConnections)
+                .maxIdleTime(maxIdleTime)
+                .pendingAcquireTimeout(pendingAcquireTimeout)
                 .evictInBackground(Duration.ofSeconds(120))
                 .metrics(true)
                 .build();
     }
 
+    // Agent 전용 커넥션 풀 (프로퍼티화)
     @Bean
     @Qualifier("agentConnectionProvider")
-    public ConnectionProvider agentConnectionProvider() {
-        return ConnectionProvider.builder("agent-pool")
-                .maxConnections(200)
-                .maxIdleTime(Duration.ofSeconds(30))
-                .pendingAcquireTimeout(Duration.ofSeconds(3))
+    public ConnectionProvider agentConnectionProvider(
+            @Value("${webclient.agent.pool.name:agent-pool}") String poolName,
+            @Value("${webclient.agent.pool.max-connections:200}") int maxConnections,
+            @Value("${webclient.agent.pool.max-idle-time:30s}") Duration maxIdleTime,
+            @Value("${webclient.agent.pool.pending-acquire-timeout:3s}") Duration pendingAcquireTimeout
+    ) {
+        log.info("[ConnectionPool][agent] config => name={}, maxConnections={}, maxIdleTime={}, pendingAcquireTimeout={}",
+                poolName, maxConnections, maxIdleTime, pendingAcquireTimeout);
+        return ConnectionProvider.builder(poolName)
+                .maxConnections(maxConnections)
+                .maxIdleTime(maxIdleTime)
+                .pendingAcquireTimeout(pendingAcquireTimeout)
                 .evictInBackground(Duration.ofSeconds(120))
                 .metrics(true)
                 .build();
@@ -148,10 +182,10 @@ public class WebClientConfig {
         });
     }
 
-    private HttpClient httpClient(ConnectionProvider provider, Duration connectTimeout, Duration readTimeout) {
+    private HttpClient httpClient(ConnectionProvider provider, Duration connectTimeout, Duration readTimeout, Duration responseTimeout) {
         return HttpClient.create(provider)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) connectTimeout.toMillis())
-                .responseTimeout(Duration.ofSeconds(10))
+                .responseTimeout(responseTimeout)
                 .doOnConnected(conn ->
                         conn.addHandlerLast(new ReadTimeoutHandler(readTimeout.toMillis(), TimeUnit.MILLISECONDS))
                                 .addHandlerLast(new WriteTimeoutHandler(readTimeout.toMillis(), TimeUnit.MILLISECONDS))
@@ -159,16 +193,19 @@ public class WebClientConfig {
                 .metrics(true, s -> s);
     }
 
+    // 기본 WebClient.Builder (프로퍼티화 및 하위 호환)
     @Bean
     @Primary
     public WebClient.Builder webClientBuilder(
-            @Value("${orchestrator.http.connect-timeout}") Duration connectTimeout,
-            @Value("${orchestrator.http.read-timeout}")    Duration readTimeout,
+            @Value("${webclient.default.connect-timeout}") Duration connectTimeout,
+            @Value("${webclient.default.read-timeout}")    Duration readTimeout,
+            @Value("${webclient.default.response-timeout:2500ms}") Duration responseTimeout,
             ObjectMapper objectMapper,
             ConnectionProvider connectionProvider) {
 
+        log.info("[WebClient][default] timeouts => connect={}, read={}, response={}", connectTimeout, readTimeout, responseTimeout);
         ReactorClientHttpConnector connector = new ReactorClientHttpConnector(
-                httpClient(connectionProvider, connectTimeout, readTimeout)
+                httpClient(connectionProvider, connectTimeout, readTimeout, responseTimeout)
         );
 
         return WebClient.builder()
@@ -177,16 +214,19 @@ public class WebClientConfig {
                 .filter(mdcFilter());
     }
 
+    // LLM 전용 WebClient.Builder (프로퍼티화 및 하위 호환)
     @Bean
     @Qualifier("llmWebClientBuilder")
     public WebClient.Builder llmWebClientBuilder(
-            @Value("${llm.client.connect-timeout}") Duration connectTimeout,
-            @Value("${llm.client.read-timeout}")    Duration readTimeout,
+            @Value("${webclient.llm.connect-timeout}") Duration connectTimeout,
+            @Value("${webclient.llm.read-timeout}")    Duration readTimeout,
+            @Value("${webclient.llm.response-timeout:${webclient.default.response-timeout:2500ms}}") Duration responseTimeout,
             ObjectMapper objectMapper,
             @Qualifier("llmConnectionProvider") ConnectionProvider connectionProvider) {
 
+        log.info("[WebClient][llm] timeouts => connect={}, read={}, response={}", connectTimeout, readTimeout, responseTimeout);
         ReactorClientHttpConnector connector = new ReactorClientHttpConnector(
-                httpClient(connectionProvider, connectTimeout, readTimeout)
+                httpClient(connectionProvider, connectTimeout, readTimeout, responseTimeout)
         );
 
         return WebClient.builder()
@@ -195,16 +235,19 @@ public class WebClientConfig {
                 .filter(mdcFilter());
     }
 
+    // Agent 전용 WebClient.Builder (프로퍼티화 및 하위 호환)
     @Bean
     @Qualifier("agentWebClientBuilder")
     public WebClient.Builder agentWebClientBuilder(
-        @Value("${agent.client.connect-timeout}") Duration connectTimeout,
-        @Value("${agent.client.read-timeout}")    Duration readTimeout,
+        @Value("${webclient.agent.connect-timeout}") Duration connectTimeout,
+        @Value("${webclient.agent.read-timeout}")    Duration readTimeout,
+        @Value("${webclient.agent.response-timeout:${webclient.default.response-timeout:2500ms}}") Duration responseTimeout,
         ObjectMapper objectMapper,
         @Qualifier("agentConnectionProvider") ConnectionProvider connectionProvider) {
 
+        log.info("[WebClient][agent] timeouts => connect={}, read={}, response={}", connectTimeout, readTimeout, responseTimeout);
         ReactorClientHttpConnector connector = new ReactorClientHttpConnector(
-                httpClient(connectionProvider, connectTimeout, readTimeout)
+                httpClient(connectionProvider, connectTimeout, readTimeout, responseTimeout)
         );
 
         return WebClient.builder()

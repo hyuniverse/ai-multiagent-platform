@@ -9,9 +9,8 @@ import com.infobank.multiagentplatform.orchestrator.model.plan.ExecutionPlan;
 import com.infobank.multiagentplatform.orchestrator.model.result.TaskResult;
 import com.infobank.multiagentplatform.core.infra.broker.BrokerClient;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -24,16 +23,25 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class ExecutionPlanExecutor {
 
     private final BrokerClient brokerClient;
     private final TaskBlockExecutor blockExecutor;
     private final ReactiveMetricOperator metricOperator;
+    private final Duration planTimeout;
+
+    public ExecutionPlanExecutor(BrokerClient brokerClient,
+                                 TaskBlockExecutor blockExecutor,
+                                 ReactiveMetricOperator metricOperator,
+                                 @Value("${orchestrator.timeouts.plan-operator:2s}") Duration planTimeout) {
+        this.brokerClient = brokerClient;
+        this.blockExecutor = blockExecutor;
+        this.metricOperator = metricOperator;
+        this.planTimeout = planTimeout;
+    }
 
     @CircuitBreaker(name = "executorCircuit", fallbackMethod = "fallbackExecutePlanReactive")
-    @Retry(name = "executorRetry")
     public Mono<Map<String, TaskResult>> executePlanReactive(Mono<ExecutionPlan> planMono) {
 
         Mono<Map<String, TaskResult>> executionMono = planMono.flatMap(plan -> {
@@ -66,7 +74,7 @@ public class ExecutionPlanExecutor {
 
                 return blocksMono;
             })
-            .timeout(Duration.ofSeconds(2));
+            .timeout(planTimeout);
         });
 
         return executionMono

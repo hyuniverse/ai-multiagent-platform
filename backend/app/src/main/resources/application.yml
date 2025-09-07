@@ -41,14 +41,66 @@ spring:
 server:
   port: 8080
 
+# 신규 표준 키: WebClient 타임아웃/풀 설정 (코드 하드코딩 제거용)
+webclient:
+  default:
+    connect-timeout: 1000ms
+    read-timeout:    1000ms
+    response-timeout: 2500ms
+    pool:
+      name: custom
+      max-connections: 500
+      pending-acquire-timeout: 5s
+      max-idle-time: 20s
+      max-life-time: 60s
+  llm:
+    connect-timeout: 1s
+    read-timeout:    1s
+    response-timeout: 2500ms
+    pool:
+      name: llm-pool
+      max-connections: 200
+      pending-acquire-timeout: 3s
+      max-idle-time: 30s
+  agent:
+    connect-timeout: 1s
+    read-timeout:    5s
+    response-timeout: 2500ms
+    pool:
+      name: agent-pool
+      max-connections: 200
+      pending-acquire-timeout: 3s
+      max-idle-time: 30s
+
+# Reactor Scheduler 설정(신규 표준 키)
+reactor:
+  scheduler:
+    bounded-elastic:
+      max-threads: 32          # 초기값: CPU*4 수준으로 튜닝 가능
+      queue-capacity: 10000
+      ttl-seconds: 60
+      thread-name: json-parsing
+      daemon: true
+
+# 연산자(reactor 체인) 레벨 타임아웃
+orchestrator:
+  timeouts:
+    llm-operator: 2000ms
+    agent-operator: 500ms
+    agent-health: 500ms
+    plan-operator: 2000ms
+    broker-operator: 2000ms
+  retries:
+    health:
+      max-attempts: 1
+      backoff: 500ms
+    parse:
+      max-attempts: 3
+      backoff: 1s
+  
 broker:
   service:
     url: http://localhost:8080/api/v1/agents
-
-orchestrator:
-  http:
-    connect-timeout: 1000ms   # 1초 연결 타임아웃
-    read-timeout:    1000ms   # 1초 응답 대기 타임아웃
 
 llm:
   client:
@@ -56,13 +108,6 @@ llm:
     api-url: http://wiremock:8080/v1/chat/completions
     # https://api.openai.com/v1/chat/completions
     model: gpt-4
-    connect-timeout: 1s
-    read-timeout:    1s
-
-agent:
-  client:
-    connect-timeout: 1s
-    read-timeout: 5s
 
 springdoc:
   api-docs:
@@ -73,41 +118,55 @@ springdoc:
 resilience4j:
   retry:
     instances:
-      executorRetry:
-        maxAttempts: 3
-        waitDuration: 1s
       openAIClientRetry:
         maxAttempts: 3
-        waitDuration: 2s
+        waitDuration: 200ms
         enableExponentialBackoff: true
         exponentialBackoffMultiplier: 2.0
+        randomizationFactor: 0.2
         retryExceptions:
-          - com.infobank.multiagentplatform.orchestrator.exception.PlanParsingException
+          - org.springframework.web.reactive.function.client.WebClientResponseException$TooManyRequests
+          - java.io.IOException
+          - java.net.ConnectException
+          - reactor.netty.http.client.PrematureCloseException
       brokerRetry:
-        maxAttempts: 3
-        waitDuration: 2s
+        maxAttempts: 1
+        waitDuration: 200ms
         enableExponentialBackoff: true
         exponentialBackoffMultiplier: 2.0
+        randomizationFactor: 0.2
 
   circuitbreaker:
+    configs:
+      default:
+        slidingWindowType: TIME_BASED
+        slidingWindowSize: 60
+        failureRateThreshold: 50
+        slowCallDurationThreshold: 2s
+        slowCallRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 10
     instances:
       executorCircuit:
+        baseConfig: default
+        slidingWindowType: COUNT_BASED
         slidingWindowSize: 20
-        failureRateThreshold: 50
         waitDurationInOpenState: 5s
       openAIClientCB:
-        slidingWindowSize: 60
-        slidingWindowType: TIME_BASED
-        failureRateThreshold: 50
-        waitDurationInOpenState: 30s
+        baseConfig: default
       brokerCB:
-        slidingWindowSize: 10
+        baseConfig: default
         slidingWindowType: COUNT_BASED
-        failureRateThreshold: 80
-        waitDurationInOpenState: 30s
-      agent-cb:
         slidingWindowSize: 20
+        minimumNumberOfCalls: 20
+        failureRateThreshold: 80
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 50
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+      agent-cb:
+        baseConfig: default
         slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
         failureRateThreshold: 60
         waitDurationInOpenState: 10s
 
@@ -121,7 +180,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: beans, health, info, prometheus, httptrace, metrics
+        include: beans, health, info, prometheus, httptrace, metrics, env, loggers, configprops, threaddump, heapdump, mappings, circuitbreakers
 
 logging:
   level:

@@ -16,6 +16,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
+import java.time.Duration;
 import java.util.List;
 
 @Component
@@ -24,14 +25,17 @@ public class RestBrokerClient implements BrokerClient {
 
     private final WebClient webClient;
     private final Scheduler boundedElasticScheduler;
+    private final Duration operatorTimeout;
 
     public RestBrokerClient(WebClient.Builder webClientBuilder,
                             @Value("${broker.service.url}") String brokerServiceUrl,
-                            @Qualifier("boundedElasticScheduler") Scheduler boundedElasticScheduler) {
+                            @Qualifier("boundedElasticScheduler") Scheduler boundedElasticScheduler,
+                            @Value("${orchestrator.timeouts.broker-operator:1000ms}") Duration operatorTimeout) {
         this.webClient = webClientBuilder
                 .baseUrl(brokerServiceUrl)
                 .build();
         this.boundedElasticScheduler = boundedElasticScheduler;
+        this.operatorTimeout = operatorTimeout;
     }
 
     @Override
@@ -44,6 +48,7 @@ public class RestBrokerClient implements BrokerClient {
                 .bodyValue(new AgentBatchRequest(agentIds))
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<ApiResponse<List<AgentDetailResponse>>>() {})
+                .timeout(operatorTimeout)
                 .doOnError(error -> log.error("배치 조회 실패: {}", error.getMessage(), error))
                 .handle((resp, sink) -> {
                     if (resp == null || resp.getData() == null) {
@@ -58,11 +63,11 @@ public class RestBrokerClient implements BrokerClient {
     @CircuitBreaker(name = "brokerCB", fallbackMethod = "fallbackGetAgentSummaries")
     @Retry(name = "brokerRetry")
     public Mono<List<AgentSummaryResponse>> getAgentSummaries() {
-        
         return webClient.get()
                 .uri("/summaries")
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<ApiResponse<List<AgentSummaryResponse>>>() {})
+                .timeout(operatorTimeout)
                 .doOnError(error -> log.error("요약 정보 조회 실패: {}", error.getMessage(), error))
                 .handle((resp, sink) -> {
                     if (resp == null || resp.getData() == null) {
@@ -73,13 +78,12 @@ public class RestBrokerClient implements BrokerClient {
                 });
     }
 
-    // Fallback Methods
-    private Mono<List<AgentDetailResponse>> fallbackGetAgentMetadataBatch(List<String> agentIds, Throwable ex) {
+    public Mono<List<AgentDetailResponse>> fallbackGetAgentMetadataBatch(List<String> agentIds, Throwable ex) {
         log.warn("BrokerClient.getAgentMetadataBatch fallback 실행: {}", ex.getMessage());
         return Mono.error(new IllegalStateException("Agent metadata batch 조회 실패: " + ex.getMessage(), ex));
     }
 
-    private Mono<List<AgentSummaryResponse>> fallbackGetAgentSummaries(Throwable ex) {
+    public Mono<List<AgentSummaryResponse>> fallbackGetAgentSummaries(Throwable ex) {
         log.warn("BrokerClient.getAgentSummaries fallback 실행: {}", ex.getMessage());
         return Mono.error(new IllegalStateException("Agent summaries 조회 실패: " + ex.getMessage(), ex));
     }

@@ -89,14 +89,16 @@ services:
       - "${WIREMOCK_PORT}:8080"
     volumes:
       - ./mock:/home/wiremock
+    command:
+      - "--no-request-journal"
     environment:
       - JAVA_OPTS=-Xmx512m -Xms128m
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 2G
         reservations:
-          memory: 256M
+          memory: 512M
     networks:
       - multi-agent-network
 

@@ -7,10 +7,10 @@ import com.infobank.multiagentplatform.domain.agent.repository.AgentSnapshotRepo
 import com.infobank.multiagentplatform.domain.agent.type.enumtype.ProtocolType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
@@ -24,6 +24,15 @@ public class AgentHealthReactiveService {
     private final AgentHealthChecker healthChecker;
     private final AgentSnapshotRepository snapshotRepository;
     private final AgentRepository agentRepository;
+
+    @Value("${orchestrator.retries.health.max-attempts:3}")
+    private int healthRetryMaxAttempts;
+
+    @Value("${orchestrator.retries.health.backoff:500ms}")
+    private Duration healthRetryBackoff;
+
+    @Value("${orchestrator.timeouts.agent-health:500ms}")
+    private Duration agentHealthTimeout;
 
     public Mono<Void> checkAllAgentsHealth() {
         Mono<Map<String, AgentEntity>> agentMapMono =
@@ -60,6 +69,7 @@ public class AgentHealthReactiveService {
                     return snapshotRepository.saveAllWithEnumCast(updatedSnapshots)
                             .then();
                 })
+                .timeout(agentHealthTimeout)
                 .then();
     }
 
@@ -73,8 +83,8 @@ public class AgentHealthReactiveService {
                                     return Mono.defer(() -> snapshotRepository.saveWithEnumCast(snapshot));
                                 })
                 )
-                .retryWhen(Retry.backoff(3, Duration.ofMillis(500)))
-                .timeout(Duration.ofSeconds(5))
+                .retryWhen(Retry.backoff(healthRetryMaxAttempts, healthRetryBackoff))
+                .timeout(agentHealthTimeout)
                 .onErrorResume(ex -> Mono.empty())
                 .then();
     }
