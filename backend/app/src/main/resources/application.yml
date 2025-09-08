@@ -55,8 +55,8 @@ webclient:
       max-life-time: 60s
   llm:
     connect-timeout: 1s
-    read-timeout:    1s
-    response-timeout: 2500ms
+    read-timeout: 30s
+    response-timeout: 30s
     pool:
       name: llm-pool
       max-connections: 200
@@ -85,7 +85,7 @@ reactor:
 # 연산자(reactor 체인) 레벨 타임아웃
 orchestrator:
   timeouts:
-    llm-operator: 2000ms
+    llm-operator: 35s
     agent-operator: 500ms
     agent-health: 500ms
     plan-operator: 2000ms
@@ -98,9 +98,9 @@ broker:
 llm:
   client:
     api-key: ${OPENAI_API_KEY}
-    api-url: http://wiremock:8080/v1/chat/completions
-    # https://api.openai.com/v1/chat/completions
-    model: gpt-4
+    # api-url: http://wiremock:8080/v1/chat/completions
+    api-url: https://api.openai.com/v1/chat/completions
+    model: gpt-3.5-turbo
 
 springdoc:
   api-docs:
@@ -147,6 +147,12 @@ resilience4j:
         waitDurationInOpenState: 5s
       openaiCB:
         baseConfig: default
+        # RL 차단 예외는 CB 실패로 집계하지 않음
+        ignoreExceptions:
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
+          - org.springframework.web.reactive.function.client.WebClientResponseException$TooManyRequests
+        # LLM 지연 허용 폭 확대(슬로우 콜 과도 집계 방지)
+        slowCallDurationThreshold: 8s
       brokerCB:
         baseConfig: default
         slidingWindowType: COUNT_BASED
@@ -172,9 +178,9 @@ resilience4j:
   ratelimiter:
     instances:
       openaiRL:
-        limitForPeriod: 100
+        limitForPeriod: 4
         limitRefreshPeriod: 1s
-        timeoutDuration: 0
+        timeoutDuration: 100ms
 
 management:
   endpoints:
@@ -196,6 +202,8 @@ logging:
     org.springframework.data.r2dbc: DEBUG
     io.r2dbc.postgresql.QUERY: DEBUG
     io.r2dbc.postgresql.PARAM: DEBUG
+    io.github.resilience4j.ratelimiter: DEBUG
+    io.github.resilience4j.circuitbreaker: DEBUG
 
   file:
     path: logs
