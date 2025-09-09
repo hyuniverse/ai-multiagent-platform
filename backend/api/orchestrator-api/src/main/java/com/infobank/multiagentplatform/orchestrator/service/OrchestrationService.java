@@ -12,6 +12,7 @@ import com.infobank.multiagentplatform.orchestrator.service.response.Orchestrati
 import com.infobank.multiagentplatform.commons.metrics.ReactiveMetricOperator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -37,7 +38,7 @@ public class OrchestrationService {
         this.metricOperator = metricOperator;
     }
 
-    public Mono<OrchestrationResponse> orchestrate(OrchestrationServiceRequest request) {
+    public Flux<String> orchestrate(OrchestrationServiceRequest request) {
         Mono<List<AgentSummaryResponse>> agents = brokerClient.getAgentSummaries()
                 .flatMap(list -> list.isEmpty()
                         ? Mono.error(new AgentInactiveException("활성화된 에이전트가 없습니다."))
@@ -45,24 +46,18 @@ public class OrchestrationService {
                 );
 
         Mono<Map<String, TaskResult>> rawResult = planner.plan(request, agents)
-                .flatMap(plan -> {
-                    return executor.executePlanReactive(Mono.just(plan));
-                });
+                .flatMap(plan -> executor.executePlanReactive(Mono.just(plan)));
 
-        Mono<OrchestrationResponse> finalMono = rawResult
-                .flatMap(results ->
+        return rawResult
+                .flatMapMany(results ->
                         postProcessor.process(Mono.just(results))
-                                .transform(metricOperator.measure("orchestration.postprocess"))
                 )
                 .onErrorResume(AgentInactiveException.class, ex -> {
                     log.error("에이전트 상태 불일치 발생: {}", ex.getMessage());
-                    return Mono.error(new IllegalStateException(
+                    return Flux.error(new IllegalStateException(
                             "에이전트 상태 불일치: " + ex.getMessage(), ex
                     ));
-                });
-
-        return finalMono
-                .transform(metricOperator.measure("orchestration.service"))
+                })
                 .doOnError(error -> log.error("=== 오케스트레이션 실패 ===: {}", error.getMessage(), error));
     }
 }

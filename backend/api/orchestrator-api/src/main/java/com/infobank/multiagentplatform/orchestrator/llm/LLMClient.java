@@ -3,6 +3,7 @@ package com.infobank.multiagentplatform.orchestrator.llm;
 import com.infobank.multiagentplatform.core.contract.agent.response.AgentSummaryResponse;
 import com.infobank.multiagentplatform.orchestrator.model.plan.ExecutionPlan;
 import com.infobank.multiagentplatform.orchestrator.service.request.OrchestrationServiceRequest;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -25,5 +26,5 @@ public interface LLMClient {
      * 내러티브 생성: 직렬화된 태스크 결과를 받아
      * 한 편의 자연어 응답으로 재구성
      */
-    Mono<String> generateText(Mono<String> prompt);
+    Flux<String> streamCompletion(Mono<String> prompt);
 }
