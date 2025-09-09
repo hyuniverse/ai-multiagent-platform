@@ -16,6 +16,51 @@ type Message = {
   timestamp: Date
 }
 
+async function* streamSse(url: string, body: OrchestrationRequest, signal: AbortSignal) {
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'text/event-stream'
+        },
+        body: JSON.stringify(body),
+        signal: signal,
+    });
+
+    if (!response.ok || !response.body) {
+        throw new Error(`Streaming request failed: ${response.status}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    while (true) {
+        const { value, done } = await reader.read();
+        if (done) {
+            break;
+        }
+        buffer += decoder.decode(value, { stream: true });
+
+        let boundaryIndex;
+        // SSE 이벤트 경계("\n\n")를 기준으로 반복 처리
+        while ((boundaryIndex = buffer.indexOf('\n\n')) >= 0) {
+            const eventBlock = buffer.substring(0, boundaryIndex);
+            buffer = buffer.substring(boundaryIndex + 2);
+
+            // "data: "로 시작하는 라인만 추출
+            const dataLine = eventBlock.split('\n').find(line => line.startsWith('data:'));
+            if (!dataLine) continue;
+
+            const data = dataLine.substring(5).trim(); // "data:" 접두사 및 공백 제거
+            if (data === '[DONE]') {
+                return; // 스트림 정상 종료
+            }
+            yield data;
+        }
+    }
+}
+
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -27,6 +72,7 @@ export default function ChatPage() {
   ])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [abortController, setAbortController] = useState<AbortController | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -34,67 +80,72 @@ export default function ChatPage() {
     scrollToBottom()
   }, [messages])
 
+  useEffect(() => {
+    return () => abortController?.abort()
+  }, [abortController])
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
   const handleSendMessage = async () => {
-    if (!input.trim()) return;
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: input,
-      sender: 'user',
-      timestamp: new Date(),
-    };
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
-  
-    try {
-      const body: OrchestrationRequest = {
-        rawText: input,
-        inputType: 'text',        // 필요하다면 동적으로 변경
-        fileName: '',             // 파일 업로드 기능이 있다면 해당 값으로
-        metadata: {},             // 추가 메타정보가 있으면 여기에 넣기
+      if (!input.trim()) return;
+
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        content: input,
+        sender: 'user',
+        timestamp: new Date(),
       };
-  
-      const response = await fetch('/api/orchestrator/ask', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (!response.ok) {
-        throw new Error(`Request failed: ${response.status}`);
+
+      const aiMessageId = (Date.now() + 1).toString();
+
+      const initialAiMessage: Message = {
+        id: aiMessageId,
+        content: "",
+        sender: 'ai',
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, userMessage, initialAiMessage]);
+      setInput('');
+      setIsLoading(true);
+
+      const controller = new AbortController();
+      setAbortController(controller);
+
+      try {
+          const body: OrchestrationRequest = {
+              rawText: input,
+              inputType: 'text',
+              fileName: '',
+              metadata: {},
+          };
+          
+          // 스트림 처리
+          for await (const chunk of streamSse('/api/orchestrator/ask', body, controller.signal)) {
+              setMessages(prev =>
+                  prev.map(m =>
+                      m.id === aiMessageId ? { ...m, content: m.content + chunk } : m
+                  )
+              );
+          }
+
+      } catch (err) {
+          // AbortController에 의해 취소된 경우는 에러 메시지를 표시하지 않음
+          if (err instanceof DOMException && err.name === 'AbortError') {
+              console.log('Stream aborted by user.');
+          } else {
+              console.error('Error sending / streaming message:', err);
+              setMessages(prev => prev.map(m => m.id === aiMessageId ? { ...m, content: '죄송합니다. 요청 처리 중 오류가 발생했습니다.' } : m));
+          }
+      } finally {
+          setIsLoading(false);
+          setAbortController(null);
+          textareaRef.current?.focus();
       }
-
-      const res = await response.json() as OrchestrationResponse
-      const narrative = res.data.narrative;
-  
-      // 5️⃣ AI 메시지로 변환하여 추가
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: narrative,
-        sender: 'ai',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, aiMessage]);
-  
-    } catch (err) {
-      console.error('Error sending message:', err);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: '죄송합니다. 요청 처리 중 오류가 발생했습니다.',
-        sender: 'ai',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
-  
-    } finally {
-      setIsLoading(false);
-      textareaRef.current?.focus();
-    }
   };
-
+  
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
