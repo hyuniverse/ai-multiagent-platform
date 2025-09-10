@@ -1,7 +1,5 @@
 import type { AgentDetailResponse, AgentRegisterRequest } from "../types/agent"
 
-const API_BASE_URL = "http://backend:8080"
-
 export async function fetchAgents(): Promise<AgentDetailResponse[]> {
   try {
     const response = await fetch("/api/agents");
