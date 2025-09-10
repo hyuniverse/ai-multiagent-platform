@@ -130,8 +130,13 @@ export default function ChatPage() {
               metadata: {},
           };
           
-          // 스트림 처리
+          // 스트림 처리: 첫 청크가 도착하면 즉시 로딩 종료
+          let firstChunk = true;
           for await (const chunk of streamSse('/api/orchestrator/ask', body, controller.signal)) {
+             if (firstChunk) {
+                 setIsLoading(false); // 첫 바이트 수신 시 로딩 표시 제거
+                 firstChunk = false;
+             }
               setMessages(prev =>
                   prev.map(m =>
                       m.id === aiMessageId ? { ...m, content: m.content + chunk } : m
@@ -187,29 +192,16 @@ export default function ChatPage() {
               <div className="flex-1 space-y-2">
                 <div className="font-medium">{message.sender === "user" ? "You" : "AI Assistant"}</div>
                 <div className="prose dark:prose-invert prose-sm max-w-none">
-                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  {message.sender === 'ai' && message.content.length === 0 ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  ) : (
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         ))}
-        {isLoading && (
-          <div className="px-4 md:px-6 py-2 max-w-3xl mx-auto">
-            <div className="flex items-start gap-4 text-sm">
-              <div className="flex-shrink-0 mt-1">
-                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                  <Bot className="h-4 w-4 text-primary-foreground" />
-                </div>
-              </div>
-              <div className="flex-1 space-y-2">
-                <div className="font-medium">AI Assistant</div>
-                <div className="prose dark:prose-invert prose-sm max-w-none">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
         <div ref={messagesEndRef} />
       </div>
 
