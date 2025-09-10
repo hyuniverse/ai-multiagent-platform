@@ -134,8 +134,8 @@ public class OpenAIClient implements LLMClient {
                         DataBufferUtils.release(db);
                         return chunk;
                     })
-                    .transform(this::parseSseStream) // 수정된 파서 적용
-                    .doOnNext(tok -> log.debug("[LLM-STREAM] token='{}'", tok.replace("\n", "\\n")))
+                    .transform(this::parseSseStream)
+                    .doOnNext(tok -> log.debug("[LLM-STREAM] token='⟦{}⟧'", tok.replace("\n", "\\n").replace(" ", "·")))
                     .doOnComplete(() -> log.debug("[LLM-STREAM] completed"))
                     .doOnError(e -> log.error("[LLM-STREAM] error: {}", e.getMessage(), e));
         });
@@ -149,7 +149,6 @@ public class OpenAIClient implements LLMClient {
                 .bufferUntil(s -> s.contains("\n\n"))
                 .map(list -> String.join("", list))
                 .flatMap(block -> Flux.fromArray(block.split("\n\n")))
-                .filter(StringUtils::hasText)
                 .flatMap(this::extractTokenFromSseBlock);
     }
 
@@ -159,9 +158,11 @@ public class OpenAIClient implements LLMClient {
     private Mono<String> extractTokenFromSseBlock(String eventBlock) {
         return Flux.fromArray(eventBlock.split("\n"))
                 .filter(line -> line.startsWith("data:"))
-                .map(line -> line.substring(5).stripLeading())
-                .filter(data -> !"[DONE]".equals(data))
-                .filter(StringUtils::hasText)
+                // 'data:' 접두사만 제거하고, LLM이 보낸 선행 공백 토큰은 그대로 유지한다
+                .map(line -> line.substring(5))
+                // [DONE] 센티넬은 공백 여부와 상관없이 걸러낸다
+                .filter(data -> !"[DONE]".equals(data.trim()))
+                // 공백만 있는 토큰도 유효하므로 필터링하지 않음
                 .next()
                 .flatMap(this::parseTokenFromJson);
     }

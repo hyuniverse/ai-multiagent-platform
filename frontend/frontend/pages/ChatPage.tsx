@@ -48,11 +48,19 @@ async function* streamSse(url: string, body: OrchestrationRequest, signal: Abort
             const eventBlock = buffer.substring(0, boundaryIndex);
             buffer = buffer.substring(boundaryIndex + 2);
 
-            // "data: "로 시작하는 라인만 추출
-            const dataLine = eventBlock.split('\n').find(line => line.startsWith('data:'));
-            if (!dataLine) continue;
+            const dataLines = eventBlock
+                .split('\n')
+                .filter(line => line.startsWith('data:'))
+                .map(line => line.slice(5));
 
-            const data = dataLine.substring(5).trim(); // "data:" 접두사 및 공백 제거
+            if (dataLines.length === 0) continue;
+
+            const data = dataLines.join('\n');
+
+            try {
+              console.debug('[SSE DEBUG] eventBlock=', JSON.stringify(eventBlock), ' data=', JSON.stringify(data));
+            } catch { /* no-op */ }
+
             if (data === '[DONE]') {
                 return; // 스트림 정상 종료
             }
