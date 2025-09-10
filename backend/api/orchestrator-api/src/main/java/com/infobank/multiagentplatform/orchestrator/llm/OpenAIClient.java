@@ -148,23 +148,25 @@ public class OpenAIClient implements LLMClient {
         return inbound
                 .bufferUntil(s -> s.contains("\n\n"))
                 .map(list -> String.join("", list))
-                .flatMap(block -> Flux.fromArray(block.split("\n\n")))
-                .flatMap(this::extractTokenFromSseBlock);
+                // 각 SSE 블록의 순서를 보장하기 위해 concatMap 사용
+                .concatMap(block -> Flux.fromArray(block.split("\n\n")))
+                // 단일 블록 내 여러 data: 라인도 순서대로 모두 처리
+                .concatMap(this::extractTokensFromSseBlock);
     }
 
     /**
-     *  단일 SSE 이벤트 블록에서 data 라인을 파싱하여 토큰을 추출합니다.
+     *  단일 SSE 이벤트 블록에서 data 라인들을 모두 파싱하여 토큰을 추출합니다.
+     *  (일부 환경에서 하나의 SSE 블록에 복수의 data: 라인이 있을 수 있으므로 next()로 첫 라인만 취하지 않음)
      */
-    private Mono<String> extractTokenFromSseBlock(String eventBlock) {
+    private Flux<String> extractTokensFromSseBlock(String eventBlock) {
         return Flux.fromArray(eventBlock.split("\n"))
                 .filter(line -> line.startsWith("data:"))
                 // 'data:' 접두사만 제거하고, LLM이 보낸 선행 공백 토큰은 그대로 유지한다
                 .map(line -> line.substring(5))
                 // [DONE] 센티넬은 공백 여부와 상관없이 걸러낸다
                 .filter(data -> !"[DONE]".equals(data.trim()))
-                // 공백만 있는 토큰도 유효하므로 필터링하지 않음
-                .next()
-                .flatMap(this::parseTokenFromJson);
+                // 각 data 라인을 JSON으로 파싱하여 content 토큰을 순서대로 내보낸다
+                .concatMap(this::parseTokenFromJson);
     }
 
     /**
